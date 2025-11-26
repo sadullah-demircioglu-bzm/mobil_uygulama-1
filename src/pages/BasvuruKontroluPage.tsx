@@ -1,4 +1,5 @@
 import React, { useState, FormEvent } from 'react';
+import { useHistory } from 'react-router-dom';
 import {
   IonContent,
   IonPage,
@@ -7,7 +8,6 @@ import {
   IonTitle,
   IonButtons,
   IonBackButton,
-  IonInput,
   IonButton,
   IonCard,
   IonCardContent,
@@ -32,6 +32,7 @@ const BasvuruKontroluPage: React.FC = () => {
   const [sonuc, setSonuc] = useState<BasvuruSonuc | null>(null);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const history = useHistory();
 
   const validateTCKimlik = (tc: string): boolean => {
     if (tc.length !== 11 || tc[0] === '0') return false;
@@ -131,29 +132,33 @@ const BasvuruKontroluPage: React.FC = () => {
           </IonText>
 
           <form onSubmit={handleSubmit} className="basvuru-form">
-            <IonInput
-              label="T.C. Kimlik No"
-              labelPlacement="stacked"
-              type="text"
-              maxlength={11}
-              value={tcKimlik}
-              onIonInput={(e) => setTcKimlik(e.detail.value?.replace(/\D/g, '') || '')}
-              fill="outline"
-              className="custom-input"
-              placeholder="11 haneli kimlik numaranız"
-            />
+            <div className="input-wrapper">
+              <label htmlFor="tc-kimlik" className="input-label">T.C. Kimlik No</label>
+              <input
+                id="tc-kimlik"
+                type="text"
+                maxLength={11}
+                value={tcKimlik}
+                onChange={(e) => setTcKimlik(e.target.value.replace(/\D/g, ''))}
+                className="custom-input"
+                placeholder="11 haneli kimlik numaranız"
+                inputMode="numeric"
+              />
+            </div>
 
-            <IonInput
-              label="Telefon Numarası"
-              labelPlacement="stacked"
-              type="tel"
-              maxlength={10}
-              value={telefon}
-              onIonInput={(e) => setTelefon(e.detail.value?.replace(/\D/g, '') || '')}
-              fill="outline"
-              className="custom-input"
-              placeholder="5XX XXX XX XX"
-            />
+            <div className="input-wrapper">
+              <label htmlFor="telefon" className="input-label">Telefon Numarası</label>
+              <input
+                id="telefon"
+                type="tel"
+                maxLength={10}
+                value={telefon}
+                onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ''))}
+                className="custom-input"
+                placeholder="5XX XXX XX XX"
+                inputMode="numeric"
+              />
+            </div>
 
             <IonButton 
               expand="block" 
@@ -200,6 +205,15 @@ const BasvuruKontroluPage: React.FC = () => {
               </IonCardContent>
             </IonCard>
           )}
+
+          <IonButton
+            expand="block"
+            color="medium"
+            style={{ borderRadius: 10, height: 48, marginTop: 20, fontWeight: 600 }}
+            onClick={() => history.push('/login')}
+          >
+            Vazgeç
+          </IonButton>
 
           <IonToast
             isOpen={showError}
