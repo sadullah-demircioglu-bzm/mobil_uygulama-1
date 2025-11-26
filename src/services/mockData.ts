@@ -50,10 +50,11 @@ export const mockTedaviDetaylar: Record<number, TedaviDetay> = {
     doktor: 'Prof. Dr. Mehmet Öztürk',
     odemeBilgileri: {
       toplamTutar: 2500.00,
-      indirimOrani: 40,
-      indirimTutari: 1000.00,
-      kartIleOdenen: 1500.00,
-      odemeYontemi: 'Bezmialem Vakıf Kart'
+      indirimOrani: 25,
+      indirimTutari: null,
+      kartIleOdenen: 1875.00,
+      odemeYontemi: 'Bezmialem Vakıf Kart',
+      netOdenen: 1875.00
     },
     sonuc: 'Kontrol muayenesi sonuçları normal sınırlardadır. Mevcut tedaviye devam edilmesi önerilmektedir.',
     notlar: 'Tansiyonunuzu düzenli ölçmeye devam ediniz.',
@@ -69,10 +70,11 @@ export const mockTedaviDetaylar: Record<number, TedaviDetay> = {
     doktor: 'Doç. Dr. Ayşe Demir',
     odemeBilgileri: {
       toplamTutar: 1800.00,
-      indirimOrani: 40,
-      indirimTutari: 720.00,
-      kartIleOdenen: 1080.00,
-      odemeYontemi: 'Bezmialem Vakıf Kart'
+      indirimOrani: null,
+      indirimTutari: 150.00,
+      kartIleOdenen: 1650.00,
+      odemeYontemi: 'Bezmialem Vakıf Kart',
+      netOdenen: 1650.00
     },
     sonuc: 'Görme keskinliği normal. Gözlük reçetesi güncellenmedi.',
     raporUrl: '/rapor-2.pdf'
@@ -87,14 +89,55 @@ export const mockTedaviDetaylar: Record<number, TedaviDetay> = {
     doktor: 'Uzm. Dr. Ali Kaya',
     odemeBilgileri: {
       toplamTutar: 2000.00,
-      indirimOrani: 40,
-      indirimTutari: 800.00,
-      kartIleOdenen: 1200.00,
-      odemeYontemi: 'Bezmialem Vakıf Kart'
+      indirimOrani: 20,
+      indirimTutari: null,
+      kartIleOdenen: 1600.00,
+      odemeYontemi: 'Bezmialem Vakıf Kart',
+      netOdenen: 1600.00
     },
     sonuc: 'Genel sağlık durumu iyi. Vitamin desteği önerildi.',
     notlar: 'Vitamin D takviyesi başlandı. 3 ay sonra kontrol.',
     raporUrl: '/rapor-3.pdf'
+  },
+  4: {
+    id: 4,
+    ad: 'Ortopedi Muayenesi',
+    tarih: '18 Ekim 2025',
+    saat: '09:00',
+    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
+    klinik: 'Ortopedi Kliniği',
+    doktor: 'Prof. Dr. Selim Arslan',
+    odemeBilgileri: {
+      toplamTutar: 3200.00,
+      indirimOrani: null,
+      indirimTutari: 200.00,
+      kartIleOdenen: 3000.00,
+      odemeYontemi: 'Bezmialem Vakıf Kart',
+      netOdenen: 3000.00
+    },
+    sonuc: 'Diz ekleminde hafif dejenerasyon tespit edildi. Fizik tedavi önerildi.',
+    notlar: '10 seans fizik tedavi planlandı.',
+    raporUrl: '/rapor-4.pdf'
+  },
+  5: {
+    id: 5,
+    ad: 'Dermatoloji Kontrolü',
+    tarih: '10 Ekim 2025',
+    saat: '11:45',
+    hastane: 'Bezmialem Fatih Hastanesi',
+    klinik: 'Dermatoloji Kliniği',
+    doktor: 'Uzm. Dr. Zeynep Şahin',
+    odemeBilgileri: {
+      toplamTutar: 1500.00,
+      indirimOrani: 15,
+      indirimTutari: null,
+      kartIleOdenen: 1275.00,
+      odemeYontemi: 'Bezmialem Vakıf Kart',
+      netOdenen: 1275.00
+    },
+    sonuc: 'Cilt muayenesi normal. Koruyucu bakım önerileri verildi.',
+    notlar: 'Güneş koruyucu kullanımına dikkat edilmesi.',
+    raporUrl: '/rapor-5.pdf'
   }
 };
 

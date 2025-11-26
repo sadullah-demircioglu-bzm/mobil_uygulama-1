@@ -172,3 +172,68 @@
   line-height: 1.6;
   margin: 0;
 }
+
+/* Discount Card */
+.discount-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  margin: 0 0 16px 0;
+  background: #FFFFFF;
+}
+
+.discount-info {
+  margin-top: 8px;
+}
+
+.discount-type {
+  font-size: 15px;
+  font-weight: 600;
+  color: #93153c;
+  margin: 0 0 16px 0;
+  padding: 12px;
+  background: #FFF5F7;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.discount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #F9FAFB;
+}
+
+.discount-row:last-of-type {
+  border-bottom: none;
+}
+
+.discount-row.highlight {
+  background: #F9FAFB;
+  margin: 8px -16px 0;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+}
+
+.discount-label {
+  font-size: 14px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.discount-value {
+  font-size: 15px;
+  color: #000000;
+  font-weight: 600;
+}
+
+.discount-value.discount-amount {
+  color: #10B981;
+}
+
+.discount-value.net-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: #93153c;
+}

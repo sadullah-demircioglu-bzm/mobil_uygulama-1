@@ -24,6 +24,9 @@ interface Islem {
   tutar: string;
   durum: 'tamamlandi' | 'beklemede';
   detay: string;
+  indirimOrani?: number;
+  indirimTutari?: number;
+  toplamTutar?: number;
 }
 
 const IslemDetayPage: React.FC = () => {
@@ -92,6 +95,26 @@ const IslemDetayPage: React.FC = () => {
   const history = useHistory();
   const handleBack = () => history.push('/islemler');
 
+  // İndirim hesaplamaları
+  const toplamTutar = islem.toplamTutar || parseFloat(islem.tutar.replace(/[^0-9.-]/g, '')) || 0;
+  let uygulananIndirim = 0;
+  let indirimTuru = '';
+  let hasIndirim = false;
+
+  if (islem.indirimOrani && islem.indirimOrani > 0) {
+    uygulananIndirim = toplamTutar * (islem.indirimOrani / 100);
+    indirimTuru = `%${islem.indirimOrani} Oranında İndirim Uygulandı`;
+    hasIndirim = true;
+  } else if (islem.indirimTutari && islem.indirimTutari > 0) {
+    uygulananIndirim = islem.indirimTutari;
+    indirimTuru = `₺${islem.indirimTutari.toFixed(2)} Sabit İndirim Uygulandı`;
+    hasIndirim = true;
+  } else {
+    indirimTuru = 'Bu işlemde indirim uygulanmamış';
+  }
+
+  const netOdenen = toplamTutar - uygulananIndirim;
+
   return (
     <IonPage>
       <div className="detay-header">
@@ -133,6 +156,31 @@ const IslemDetayPage: React.FC = () => {
             <IonCardContent>
               <h3 className="section-title">Açıklama</h3>
               <p className="description-text">{islem.detay}</p>
+            </IonCardContent>
+          </IonCard>
+          {/* İndirim Bilgileri */}
+          <IonCard className="discount-card">
+            <IonCardContent>
+              <h3 className="section-title">İndirim Bilgileri</h3>
+              <div className="discount-info">
+                <p className="discount-type">{indirimTuru}</p>
+                {hasIndirim && (
+                  <>
+                    <div className="discount-row">
+                      <span className="discount-label">Toplam Tutar:</span>
+                      <span className="discount-value">₺{toplamTutar.toFixed(2)}</span>
+                    </div>
+                    <div className="discount-row">
+                      <span className="discount-label">İndirim Tutarı:</span>
+                      <span className="discount-value discount-amount">-₺{uygulananIndirim.toFixed(2)}</span>
+                    </div>
+                    <div className="discount-row highlight">
+                      <span className="discount-label">Net Ödenen:</span>
+                      <span className="discount-value net-amount">₺{netOdenen.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </IonCardContent>
           </IonCard>
           {/* Rapor İndir Butonu */}

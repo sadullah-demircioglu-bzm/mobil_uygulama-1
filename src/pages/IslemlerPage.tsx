@@ -26,6 +26,9 @@ interface Islem {
   tutar: string;
   durum: 'tamamlandi' | 'beklemede';
   detay: string;
+  indirimOrani?: number;
+  indirimTutari?: number;
+  toplamTutar?: number;
 }
 
 // Mock data - daha fazla item
@@ -36,7 +39,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Poliklinik Muayenesi',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dr. Ahmet Yılmaz',
-    tutar: '₺250.00',
+    tutar: '₺187.50',
+    toplamTutar: 250,
+    indirimOrani: 25,
     durum: 'tamamlandi',
     detay: 'Kardiyoloji poliklinik kontrolü yapıldı.'
   },
@@ -46,7 +51,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Laboratuvar Tetkiki',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dr. Ayşe Demir',
-    tutar: '₺180.00',
+    tutar: '₺130.00',
+    toplamTutar: 180,
+    indirimTutari: 50,
     durum: 'tamamlandi',
     detay: 'Tam kan sayımı ve biyokimya testleri yapıldı.'
   },
@@ -56,7 +63,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Görüntüleme',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dr. Mehmet Kaya',
-    tutar: '₺420.00',
+    tutar: '₺357.00',
+    toplamTutar: 420,
+    indirimOrani: 15,
     durum: 'tamamlandi',
     detay: 'Akciğer grafisi çekildi.'
   },
@@ -66,7 +75,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Fizik Tedavi',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Fzt. Zeynep Arslan',
-    tutar: '₺150.00',
+    tutar: '₺75.00',
+    toplamTutar: 150,
+    indirimTutari: 75,
     durum: 'tamamlandi',
     detay: 'Bel fıtığı için fizik tedavi seansı.'
   },
@@ -76,7 +87,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Diş Tedavisi',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dt. Fatma Çelik',
-    tutar: '₺320.00',
+    tutar: '₺256.00',
+    toplamTutar: 320,
+    indirimOrani: 20,
     durum: 'tamamlandi',
     detay: 'Diş dolgu işlemi yapıldı.'
   },
@@ -86,7 +99,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Kontrol Muayenesi',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dr. Can Öztürk',
-    tutar: '₺200.00',
+    tutar: '₺100.00',
+    toplamTutar: 200,
+    indirimTutari: 100,
     durum: 'tamamlandi',
     detay: 'Genel dahiliye kontrolü.'
   },
@@ -96,7 +111,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'EKG',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dr. Selin Yıldız',
-    tutar: '₺100.00',
+    tutar: '₺90.00',
+    toplamTutar: 100,
+    indirimOrani: 10,
     durum: 'tamamlandi',
     detay: 'Elektrokardiyografi çekildi.'
   },
@@ -106,7 +123,9 @@ const mockIslemlerData: Islem[] = [
     tur: 'Ultrason',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
     doktor: 'Dr. Ali Şahin',
-    tutar: '₺280.00',
+    tutar: '₺210.00',
+    toplamTutar: 280,
+    indirimOrani: 25,
     durum: 'tamamlandi',
     detay: 'Batın ultrasonografi yapıldı.'
   }

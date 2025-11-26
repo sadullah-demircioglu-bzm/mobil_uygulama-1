@@ -32,6 +32,11 @@ interface Islem {
   hastane: string;
   tutar: string;
   durum: 'tamamlandi' | 'beklemede';
+  doktor?: string;
+  detay?: string;
+  indirimOrani?: number;
+  indirimTutari?: number;
+  toplamTutar?: number;
 }
 
 const mockDuyurular: Duyuru[] = [
@@ -61,24 +66,36 @@ const mockIslemler: Islem[] = [
     tarih: '15.11.2025',
     tur: 'Poliklinik Muayenesi',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    tutar: '₺250.00',
-    durum: 'tamamlandi'
+    tutar: '₺187.50',
+    toplamTutar: 250,
+    indirimOrani: 25,
+    durum: 'tamamlandi',
+    doktor: 'Dr. Ahmet Yılmaz',
+    detay: 'Kardiyoloji poliklinik kontrolü yapıldı.'
   },
   {
     id: 2,
     tarih: '10.11.2025',
     tur: 'Laboratuvar Tetkiki',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    tutar: '₺180.00',
-    durum: 'tamamlandi'
+    tutar: '₺130.00',
+    toplamTutar: 180,
+    indirimTutari: 50,
+    durum: 'tamamlandi',
+    doktor: 'Dr. Ayşe Demir',
+    detay: 'Tam kan sayımı ve biyokimya testleri yapıldı.'
   },
   {
     id: 3,
     tarih: '05.11.2025',
     tur: 'Görüntüleme',
     hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    tutar: '₺420.00',
-    durum: 'tamamlandi'
+    tutar: '₺357.00',
+    toplamTutar: 420,
+    indirimOrani: 15,
+    durum: 'tamamlandi',
+    doktor: 'Dr. Mehmet Kaya',
+    detay: 'Akciğer grafisi çekildi.'
   }
 ];
 

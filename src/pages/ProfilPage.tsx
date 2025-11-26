@@ -45,30 +45,39 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
   const [otpDigits, setOtpDigits] = useState<string[]>(Array(6).fill(''));
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [newEmail, setNewEmail] = useState('');
+  const [currentEmail, setCurrentEmail] = useState(mockUser.eposta || '');
+  const [emailStep, setEmailStep] = useState<'email' | 'otp'>('email');
+  const [emailOtpDigits, setEmailOtpDigits] = useState<string[]>(Array(6).fill(''));
+  const emailOtpRefs = useRef<HTMLInputElement[]>([]);
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastColor, setToastColor] = useState<'success' | 'danger'>('success');
 
   const handlePasswordChange = () => {
     if (!oldPassword || !newPassword || !confirmPassword) {
       setToastMessage('Lütfen tüm alanları doldurunuz.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setToastMessage('Yeni şifreler eşleşmiyor.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
 
     if (newPassword.length < 6) {
       setToastMessage('Şifre en az 6 karakter olmalıdır.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
 
     setToastMessage('Şifreniz başarıyla değiştirildi.');
+    setToastColor('success');
     setShowToast(true);
     setShowPasswordModal(false);
     setOldPassword('');
@@ -79,15 +88,18 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
   const handlePhoneContinue = () => {
     if (!newPhone) {
       setToastMessage('Lütfen telefon numaranızı giriniz.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
     if (newPhone.replace(/\D/g, '').length !== 10) {
       setToastMessage('Telefon numarası 10 haneli olmalıdır.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
     setToastMessage('Doğrulama kodu gönderildi.');
+    setToastColor('success');
     setShowToast(true);
     setPhoneStep('otp');
     // Focus first OTP input after slight delay to ensure render
@@ -122,17 +134,20 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     const code = otpDigits.join('');
     if (code.length !== 6) {
       setToastMessage('Lütfen 6 haneli kodu giriniz.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
     if (code === '123456') {
       setCurrentPhone(newPhone);
       setToastMessage('Telefonunuz güncellendi.');
+      setToastColor('success');
       setShowToast(true);
       setShowPhoneModal(false);
       resetPhoneModalState();
     } else {
       setToastMessage('Hatalı doğrulama kodu.');
+      setToastColor('danger');
       setShowToast(true);
     }
   };
@@ -143,23 +158,76 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     setNewPhone('');
   };
 
-  const handleEmailChange = () => {
+  const handleEmailContinue = () => {
     if (!newEmail) {
       setToastMessage('Lütfen e-posta adresinizi giriniz.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
       setToastMessage('Geçerli bir e-posta adresi giriniz.');
+      setToastColor('danger');
       setShowToast(true);
       return;
     }
-
-    setToastMessage('E-posta adresiniz başarıyla güncellendi.');
+    setToastMessage('Doğrulama kodu gönderildi.');
+    setToastColor('success');
     setShowToast(true);
-    setShowEmailModal(false);
+    setEmailStep('otp');
+    setTimeout(() => {
+      if (emailOtpRefs.current[0]) emailOtpRefs.current[0].focus();
+    }, 50);
+  };
+
+  const handleEmailOtpInputChange = (index: number, value: string) => {
+    const onlyDigit = value.replace(/\D/g, '').slice(0, 1);
+    const nextDigits = [...emailOtpDigits];
+    nextDigits[index] = onlyDigit;
+    setEmailOtpDigits(nextDigits);
+    if (onlyDigit && index < emailOtpRefs.current.length - 1) {
+      emailOtpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleEmailOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !emailOtpDigits[index] && index > 0) {
+      emailOtpRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowLeft' && index > 0) {
+      emailOtpRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowRight' && index < emailOtpRefs.current.length - 1) {
+      emailOtpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleVerifyEmail = () => {
+    const code = emailOtpDigits.join('');
+    if (code.length !== 6) {
+      setToastMessage('Lütfen 6 haneli kodu giriniz.');
+      setToastColor('danger');
+      setShowToast(true);
+      return;
+    }
+    if (code === '123456') {
+      setCurrentEmail(newEmail);
+      setToastMessage('E-posta adresiniz güncellendi.');
+      setToastColor('success');
+      setShowToast(true);
+      setShowEmailModal(false);
+      resetEmailModalState();
+    } else {
+      setToastMessage('Hatalı doğrulama kodu.');
+      setToastColor('danger');
+      setShowToast(true);
+    }
+  };
+
+  const resetEmailModalState = () => {
+    setEmailStep('email');
+    setEmailOtpDigits(Array(6).fill(''));
     setNewEmail('');
   };
 
@@ -229,11 +297,11 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
                   </IonItem>
                 )}
 
-                {mockUser.eposta && (
+                {currentEmail && (
                   <IonItem>
                     <IonLabel>
                       <p className="info-label">E-posta</p>
-                      <h3 className="info-value">{mockUser.eposta}</h3>
+                      <h3 className="info-value">{currentEmail}</h3>
                     </IonLabel>
                   </IonItem>
                 )}
@@ -275,42 +343,6 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
           Çıkış Yap
         </IonButton>
 
-        {/* Modals */}
-        <IonModal isOpen={showPasswordModal} onDidDismiss={() => setShowPasswordModal(false)}>
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle>Şifre Değiştir</IonTitle>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent className="ion-padding">
-            <IonInput
-              label="Mevcut Şifre"
-              labelPlacement="stacked"
-              type="password"
-              value={oldPassword}
-              onIonInput={(e) => setOldPassword(e.detail.value || '')}
-              className="custom-input"
-            />
-            <IonInput
-              label="Yeni Şifre"
-              labelPlacement="stacked"
-              type="password"
-              value={newPassword}
-              onIonInput={(e) => setNewPassword(e.detail.value || '')}
-              className="custom-input"
-            />
-            <IonInput
-              label="Yeni Şifre (Tekrar)"
-              labelPlacement="stacked"
-              type="password"
-              value={confirmPassword}
-              onIonInput={(e) => setConfirmPassword(e.detail.value || '')}
-              className="custom-input"
-            />
-            <IonButton expand="block" className="primary-button" onClick={handlePasswordChange}>Kaydet</IonButton>
-            <IonButton expand="block" fill="clear" onClick={() => setShowPasswordModal(false)}>Vazgeç</IonButton>
-          </IonContent>
-        </IonModal>
 
         <IonModal
           isOpen={showPhoneModal}
@@ -380,24 +412,70 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
           </IonContent>
         </IonModal>
 
-        <IonModal isOpen={showEmailModal} onDidDismiss={() => setShowEmailModal(false)}>
+        <IonModal
+          isOpen={showEmailModal}
+          onDidDismiss={() => {
+            setShowEmailModal(false);
+            resetEmailModalState();
+          }}
+        >
           <IonHeader>
             <IonToolbar>
               <IonTitle>E-posta Değiştir</IonTitle>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="ion-padding">
-            <IonInput
-              label="Yeni E-posta"
-              labelPlacement="stacked"
-              type="email"
-              value={newEmail}
-              onIonInput={(e) => setNewEmail(e.detail.value || '')}
-              className="custom-input"
-              placeholder="ornek@eposta.com"
-            />
-            <IonButton expand="block" className="primary-button" onClick={handleEmailChange}>Kaydet</IonButton>
-            <IonButton expand="block" fill="clear" onClick={() => setShowEmailModal(false)}>Vazgeç</IonButton>
+          <IonContent className="ion-padding phoneModal__content">
+            {emailStep === 'email' && (
+              <div className="phoneModal__step phoneModal__stepPhone">
+                <IonInput
+                  label="Yeni E-posta"
+                  labelPlacement="stacked"
+                  type="email"
+                  value={newEmail}
+                  onIonInput={(e) => setNewEmail(e.detail.value || '')}
+                  className="custom-input"
+                  placeholder="ornek@eposta.com"
+                />
+                <IonButton expand="block" className="primary-button" onClick={handleEmailContinue}>Devam Et</IonButton>
+                <IonButton
+                  expand="block"
+                  fill="clear"
+                  onClick={() => {
+                    setShowEmailModal(false);
+                    resetEmailModalState();
+                  }}
+                >Vazgeç</IonButton>
+              </div>
+            )}
+            {emailStep === 'otp' && (
+              <div className="phoneModal__step phoneModal__stepOtp">
+                <p className="phoneModal__instruction">E-posta adresinize gönderilen 6 haneli kodu giriniz.</p>
+                <div className="phoneModal__otpInputs">
+                  {emailOtpDigits.map((d, i) => (
+                    <input
+                      key={i}
+                      ref={(el) => { if (el) emailOtpRefs.current[i] = el; }}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      className="phoneModal__otpInput"
+                      value={d}
+                      onChange={(e) => handleEmailOtpInputChange(i, e.target.value)}
+                      onKeyDown={(e) => handleEmailOtpKeyDown(i, e)}
+                    />
+                  ))}
+                </div>
+                <IonButton expand="block" className="primary-button" onClick={handleVerifyEmail}>Doğrula ve Güncelle</IonButton>
+                <IonButton
+                  expand="block"
+                  fill="clear"
+                  onClick={() => {
+                    setShowEmailModal(false);
+                    resetEmailModalState();
+                  }}
+                >Vazgeç</IonButton>
+              </div>
+            )}
           </IonContent>
         </IonModal>
 
@@ -407,7 +485,7 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
           message={toastMessage}
           duration={2500}
           position="top"
-          color="success"
+          color={toastColor}
         />
       </IonContent>
     </IonPage>
