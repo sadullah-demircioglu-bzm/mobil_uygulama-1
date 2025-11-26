@@ -39,54 +39,9 @@ const DestekPage: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Destek</IonTitle>
-        </IonToolbar>
-      </IonHeader>
 
       <IonContent className="ion-padding destek-page">
         {/* Destek Formu */}
-        <div className="section">
-          <IonText>
-            <h3 className="section-title">Bize Ulaşın</h3>
-          </IonText>
-          
-          <IonCard>
-            <IonCardContent>
-              <form onSubmit={handleSubmit} className="destek-form">
-                <IonInput
-                  label="Konu"
-                  labelPlacement="stacked"
-                  type="text"
-                  value={konu}
-                  onIonInput={(e) => setKonu(e.detail.value || '')}
-                  fill="outline"
-                  placeholder="Sorunuzu özetleyin"
-                />
-
-                <IonTextarea
-                  label="Mesajınız"
-                  labelPlacement="stacked"
-                  value={mesaj}
-                  onIonInput={(e) => setMesaj(e.detail.value || '')}
-                  fill="outline"
-                  placeholder="Detaylı açıklama yazın..."
-                  rows={6}
-                />
-
-                <IonButton 
-                  expand="block" 
-                  type="submit"
-                  className="submit-button"
-                  disabled={!konu || !mesaj}
-                >
-                  Gönder
-                </IonButton>
-              </form>
-            </IonCardContent>
-          </IonCard>
-        </div>
 
         {/* SSS */}
         <div className="section">

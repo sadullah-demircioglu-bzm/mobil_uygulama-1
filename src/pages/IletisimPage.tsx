@@ -26,12 +26,6 @@ import './IletisimPage.css';
 const IletisimPage: React.FC = () => {
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>İletişim</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
       <IonContent className="ion-padding iletisim-page">
         {/* İletişim Bilgileri */}
         <div className="section">

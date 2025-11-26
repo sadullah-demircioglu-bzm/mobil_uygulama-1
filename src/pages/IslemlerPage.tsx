@@ -141,11 +141,6 @@ const IslemlerPage: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>İşlemler</IonTitle>
-        </IonToolbar>
-      </IonHeader>
 
       <IonContent className="islemler-page">
         {isLoading ? (

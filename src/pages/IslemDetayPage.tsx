@@ -2,11 +2,6 @@ import React, { useRef } from 'react';
 import {
   IonContent,
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonButtons,
-  IonBackButton,
   IonCard,
   IonCardContent,
   IonButton,
@@ -14,7 +9,7 @@ import {
   IonText,
   IonSpinner
 } from '@ionic/react';
-import { downloadOutline, receiptOutline } from 'ionicons/icons';
+import { downloadOutline } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -32,14 +27,13 @@ interface Islem {
 }
 
 const IslemDetayPage: React.FC = () => {
-  const history = useHistory();
+  // const history = useHistory();
   const location = useLocation<{ islem: Islem }>();
   const islem = location.state?.islem;
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   if (!islem) {
-    history.goBack();
     return null;
   }
 
@@ -95,62 +89,45 @@ const IslemDetayPage: React.FC = () => {
     }
   };
 
+  const history = useHistory();
+  const handleBack = () => history.push('/islemler');
+
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/islemler" text="Geri" />
-          </IonButtons>
-          <IonTitle>İşlem Detayı</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
+      <div className="detay-header">
+        <button className="back-btn" onClick={handleBack}>
+          ← Geri
+        </button>
+        <h2 className="detay-title">{islem.tur}</h2>
+      </div>
       <IonContent className="islem-detay-page">
         <div className="detay-container" ref={contentRef}>
-          {/* Header */}
-          <div className="detay-header">
-            <div className="header-icon-wrapper">
-              <IonIcon icon={receiptOutline} className="header-icon" />
-            </div>
-            <h1 className="detay-title">{islem.tur}</h1>
-            <span className={`detay-status ${islem.durum}`}>
-              {islem.durum === 'tamamlandi' ? 'Tamamlandı' : 'Beklemede'}
-            </span>
-          </div>
-
           {/* İşlem Bilgileri */}
           <IonCard className="info-card">
             <IonCardContent>
               <h3 className="section-title">İşlem Bilgileri</h3>
-              
               <div className="info-row">
                 <span className="info-label">Tarih</span>
                 <span className="info-value">{islem.tarih}</span>
               </div>
-
               <div className="info-row">
                 <span className="info-label">Doktor</span>
                 <span className="info-value">{islem.doktor}</span>
               </div>
-
               <div className="info-row">
                 <span className="info-label">Hastane</span>
                 <span className="info-value">{islem.hastane}</span>
               </div>
-
               <div className="info-row">
                 <span className="info-label">İşlem Türü</span>
                 <span className="info-value">{islem.tur}</span>
               </div>
-
               <div className="info-row highlight">
                 <span className="info-label">Tutar</span>
                 <span className="info-value amount">{islem.tutar}</span>
               </div>
             </IonCardContent>
           </IonCard>
-
           {/* Açıklama */}
           <IonCard className="description-card">
             <IonCardContent>
@@ -158,7 +135,6 @@ const IslemDetayPage: React.FC = () => {
               <p className="description-text">{islem.detay}</p>
             </IonCardContent>
           </IonCard>
-
           {/* Rapor İndir Butonu */}
           {islem.durum === 'tamamlandi' && (
             <IonButton
@@ -180,7 +156,6 @@ const IslemDetayPage: React.FC = () => {
               )}
             </IonButton>
           )}
-
           {/* Yardım Metni */}
           <div className="help-text">
             <IonText color="medium">

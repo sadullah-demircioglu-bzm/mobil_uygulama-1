@@ -14,7 +14,7 @@
 }
 
 .contact-icon {
-  color: #C8A850;
+  color: #93153c;
   font-size: 24px;
 }
 
@@ -64,7 +64,7 @@ ion-list ion-item p {
 
 .social-icon {
   font-size: 36px;
-  color: #C8A850;
+  color: #93153c;
   cursor: pointer;
   transition: transform 0.2s;
 }

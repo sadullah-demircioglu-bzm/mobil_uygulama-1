@@ -119,18 +119,11 @@ const BasvuruKontroluPage: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/login" text="Geri" />
-          </IonButtons>
-          <IonTitle>Başvuru Kontrolü</IonTitle>
-        </IonToolbar>
-      </IonHeader>
 
       <IonContent className="ion-padding basvuru-kontrolu-page">
         <div className="basvuru-container">
           <IonText>
+            
             <h2 className="page-title">Başvuru Durumunu Sorgula</h2>
             <p className="page-description">
               Kart başvurunuzun durumunu öğrenmek için T.C. Kimlik No ve telefon numaranızı giriniz.

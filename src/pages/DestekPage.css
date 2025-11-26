@@ -19,22 +19,6 @@
   gap: 20px;
 }
 
-.destek-form ion-input,
-.destek-form ion-textarea {
-  --border-color: #E5E7EB;
-  --border-radius: 8px;
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --highlight-color: #C8A850;
-}
-
-.submit-button {
-  --background: #C8A850;
-  --background-hover: #B89740;
-  --background-activated: #B89740;
-  --border-radius: 8px;
-  margin-top: 8px;
-}
 
 .submit-button[disabled] {
   opacity: 0.5;

@@ -63,19 +63,10 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/login" text="Geri" />
-          </IonButtons>
-          <IonTitle>Doğrulama</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
       <IonContent className="ion-padding otp-page">
         <div className="otp-container">
           <div className="logo-container">
-            <IonImg src="/assets/logo-bezmialem.svg" alt="Bezmialem" className="logo" />
+            <IonImg src="/assets/logo-bezmialem.png" alt="Bezmialem" className="logo" />
           </div>
 
           <IonText>

@@ -76,7 +76,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {/* Logo */}
           <div className="logo-container">
             <IonImg 
-              src="/assets/logo-bezmialem.svg" 
+              src="/assets/logo-bezmialem.png" 
               alt="Bezmialem Vakıf Üniversitesi" 
               className="logo"
             />

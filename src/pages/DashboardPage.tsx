@@ -14,6 +14,7 @@ import {
   IonIcon
 } from '@ionic/react';
 import { calendarOutline, receiptOutline } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 import { mockUser } from '../services/mockData';
 import './DashboardPage.css';
 
@@ -82,21 +83,11 @@ const mockIslemler: Islem[] = [
 ];
 
 const DashboardPage: React.FC = () => {
+  const history = useHistory();
   const [selectedTab, setSelectedTab] = useState<'duyurular' | 'islemler'>('duyurular');
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Bezmialem Vakıf Kart</IonTitle>
-          <div slot="end" className="header-avatar">
-            <div className="avatar-placeholder">
-              {mockUser.ad[0]}{mockUser.soyad[0]}
-            </div>
-          </div>
-        </IonToolbar>
-      </IonHeader>
-
       <IonContent className="dashboard-page">
         {/* Kart ve Bakiye */}
         <div className="card-balance-section">
@@ -191,7 +182,7 @@ const DashboardPage: React.FC = () => {
 
             {selectedTab === 'islemler' && (
               <div className="islemler-list">
-                {mockIslemler.map(islem => (
+                {mockIslemler.slice(0, 3).map(islem => (
                   <IonCard key={islem.id} className="islem-card">
                     <IonCardContent>
                       <div className="islem-header">
@@ -209,6 +200,14 @@ const DashboardPage: React.FC = () => {
                     </IonCardContent>
                   </IonCard>
                 ))}
+                {mockIslemler.length >= 3 && (
+                  <button 
+                    className="see-more-button"
+                    onClick={() => history.push('/islemler')}
+                  >
+                    Daha Fazlasını Göster
+                  </button>
+                )}
               </div>
             )}
           </div>
