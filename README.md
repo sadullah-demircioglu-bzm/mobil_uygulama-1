@@ -46,6 +46,35 @@ npm run dev
 
 Tarayıcıda `http://localhost:5173` (Vite varsayılan) açın.
 
+## API Ortam Yapılandırması
+
+Uygulama tüm backend istekleri için merkezi bir base URL kullanır. Bu değer Vite ortam değişkenlerinden (`VITE_API_BASE_URL`) okunur ve `src/services/api.ts` içindeki Axios wrapper tarafından kullanılır.
+
+1) Önce `.env.example` dosyasını inceleyin ve uygun ortam dosyasına kopyalayın:
+
+```
+cp .env.example .env.development
+cp .env.example .env.staging
+cp .env.example .env.production
+```
+
+2) Her ortam için API base URL değerini güncelleyin:
+
+```
+# .env.development
+VITE_API_BASE_URL=http://localhost:3000
+
+# .env.staging
+VITE_API_BASE_URL=https://staging-api.example.com
+
+# .env.production
+VITE_API_BASE_URL=https://api.example.com
+```
+
+Notlar:
+- Vite ile istemciye açılacak değişkenler `VITE_` ile başlamalıdır.
+- `apiEndpoints.ts` dosyasından uç noktaları, `api.ts` dosyasından ise baseURL, token ve hata yönetimini merkezi olarak kontrol edebilirsiniz.
+
 ## Login bilgileri (dummy)
 
 - TC: `12345678901`

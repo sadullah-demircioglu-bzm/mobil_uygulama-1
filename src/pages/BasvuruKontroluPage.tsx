@@ -16,6 +16,9 @@ import {
   IonSpinner
 } from '@ionic/react';
 import './BasvuruKontroluPage.css';
+import { API } from '../services/apiEndpoints';
+import { http } from '../services/api';
+import type { ApplicationCheckRequest, ApplicationCheckResponse } from '../types/api';
 
 interface BasvuruSonuc {
   durum: 'onaylandi' | 'beklemede' | 'reddedildi' | 'bulunamadi';
@@ -33,6 +36,7 @@ const BasvuruKontroluPage: React.FC = () => {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const history = useHistory();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateTCKimlik = (tc: string): boolean => {
     if (tc.length !== 11 || tc[0] === '0') return false;
@@ -75,28 +79,21 @@ const BasvuruKontroluPage: React.FC = () => {
       return;
     }
 
+    if (isSubmitting) return;
     setLoading(true);
+    setIsSubmitting(true);
     setSonuc(null);
 
     try {
-      // Mock API call - gerçek uygulamada backend'e istek atılacak
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock response
-      const mockSonuc: BasvuruSonuc = {
-        durum: 'onaylandi',
-        mesaj: 'Başvurunuz onaylanmıştır.',
-        basvuruTarihi: '15.11.2025',
-        sonGuncelleme: '16.11.2025',
-        aciklama: 'Kartınız hazırlanmaktadır. En kısa sürede tarafınıza ulaştırılacaktır.'
-      };
-
-      setSonuc(mockSonuc);
-    } catch (error) {
-      setErrorMessage('Sorgulama sırasında bir hata oluştu.');
+      const payload: ApplicationCheckRequest = { tc: tcKimlik, phone: telefon };
+      const resp = await http.post<ApplicationCheckResponse>(API.application.check, payload);
+      setSonuc(resp as BasvuruSonuc);
+    } catch (error: any) {
+      setErrorMessage(error?.response?.data?.message || 'Sorgulama sırasında bir hata oluştu.');
       setShowError(true);
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -165,6 +162,7 @@ const BasvuruKontroluPage: React.FC = () => {
               type="submit"
               className="submit-button"
               disabled={loading}
+              disabled={loading || isSubmitting}
             >
               {loading ? <IonSpinner name="crescent" /> : 'Sorgula'}
             </IonButton>

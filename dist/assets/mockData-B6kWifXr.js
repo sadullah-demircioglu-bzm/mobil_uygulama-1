@@ -1,0 +1,1 @@
+const i={ad:"AHMET",soyad:"YILMAZ",tcKimlik:"12345678901",kartNo:"5432 1098 7654 3210",telefon:"0555 123 45 67",eposta:"ahmet.yilmaz@example.com",indirimler:[{tur:"Şehit/Gazi Yakını İndirimi",oran:20},{tur:"Emekli İndirimi",oran:10}]};export{i as m};

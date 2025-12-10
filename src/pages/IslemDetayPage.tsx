@@ -11,8 +11,10 @@ import {
 } from '@ionic/react';
 import { downloadOutline } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { API } from '../services/apiEndpoints';
+import { http } from '../services/api';
+import type { TransactionDetailResponse } from '../types/api';
+import { useEffectOnce } from '../hooks/useEffectOnce';
 import './IslemDetayPage.css';
 
 interface Islem {
@@ -35,58 +37,49 @@ const IslemDetayPage: React.FC = () => {
   const islem = location.state?.islem;
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [fetchedIslem, setFetchedIslem] = React.useState<Islem | null>(null);
 
-  if (!islem) {
-    return null;
-  }
+  const islemIdFromPath = (() => {
+    const parts = window.location.pathname.split('/');
+    const last = parts[parts.length - 1];
+    const id = Number(last);
+    return Number.isFinite(id) ? id : undefined;
+  })();
+
+  useEffectOnce(() => {
+    if (!location.state?.islem && islemIdFromPath) {
+      (async () => {
+        try {
+          const data = await http.get<TransactionDetailResponse>(API.transactions.detail(islemIdFromPath), undefined, { retryMeta: { retry: 1 } });
+          setFetchedIslem(data as any);
+        } catch (e) {
+          // ignore, show minimal UI
+        }
+      })();
+    }
+  });
+
+  const aktifIslem: Islem | null = islem || fetchedIslem || null;
+  if (!aktifIslem) return null;
 
   const handleDownloadReport = async () => {
-    if (!contentRef.current) return;
-    
+    if (!aktifIslem?.id) return;
     setIsDownloading(true);
     try {
-      // Sayfayı canvas'a çevir
-      const canvas = await html2canvas(contentRef.current, {
-        allowTaint: true,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        scale: 2,
-        logging: false
-      });
-
-      // Canvas'tan PDF oluştur
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const imgWidth = 210; // A4 genişliği (mm)
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/png');
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // Çok sayfalı PDF için
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= 297; // A4 yüksekliği (mm)
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-      }
-
-      // PDF'i indir
-      const filename = `Islem_Raporu_${islem.id}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(filename);
-
-      console.log('Rapor başarıyla indirildi:', filename);
+      const blob = await http.get<Blob>(API.transactions.report(aktifIslem.id), undefined, {
+        responseType: 'blob',
+        retryMeta: { retry: 1 }
+      } as any);
+      const url = window.URL.createObjectURL(blob as any);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Islem_Raporu_${aktifIslem.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('PDF indirme hatası:', error);
-      alert('Rapor indirilirken bir hata oluştu. Lütfen tekrar deneyiniz.');
+      alert('Rapor indirilirken bir hata oluştu.');
     } finally {
       setIsDownloading(false);
     }
@@ -96,18 +89,18 @@ const IslemDetayPage: React.FC = () => {
   const handleBack = () => history.push('/islemler');
 
   // İndirim hesaplamaları
-  const toplamTutar = islem.toplamTutar || parseFloat(islem.tutar.replace(/[^0-9.-]/g, '')) || 0;
+  const toplamTutar = aktifIslem.toplamTutar || parseFloat(aktifIslem.tutar.replace(/[^0-9.-]/g, '')) || 0;
   let uygulananIndirim = 0;
   let indirimTuru = '';
   let hasIndirim = false;
 
-  if (islem.indirimOrani && islem.indirimOrani > 0) {
+  if (aktifIslem.indirimOrani && aktifIslem.indirimOrani > 0) {
     uygulananIndirim = toplamTutar * (islem.indirimOrani / 100);
-    indirimTuru = `%${islem.indirimOrani} Oranında İndirim Uygulandı`;
+    indirimTuru = `%${aktifIslem.indirimOrani} Oranında İndirim Uygulandı`;
     hasIndirim = true;
-  } else if (islem.indirimTutari && islem.indirimTutari > 0) {
-    uygulananIndirim = islem.indirimTutari;
-    indirimTuru = `₺${islem.indirimTutari.toFixed(2)} Sabit İndirim Uygulandı`;
+  } else if (aktifIslem.indirimTutari && aktifIslem.indirimTutari > 0) {
+    uygulananIndirim = aktifIslem.indirimTutari;
+    indirimTuru = `₺${aktifIslem.indirimTutari.toFixed(2)} Sabit İndirim Uygulandı`;
     hasIndirim = true;
   } else {
     indirimTuru = 'Bu işlemde indirim uygulanmamış';
@@ -121,7 +114,7 @@ const IslemDetayPage: React.FC = () => {
         <button className="back-btn" onClick={handleBack}>
           ← Geri
         </button>
-        <h2 className="detay-title">{islem.tur}</h2>
+        <h2 className="detay-title">{aktifIslem.tur}</h2>
       </div>
       <IonContent className="islem-detay-page">
         <div className="detay-container" ref={contentRef}>
@@ -131,23 +124,23 @@ const IslemDetayPage: React.FC = () => {
               <h3 className="section-title">İşlem Bilgileri</h3>
               <div className="info-row">
                 <span className="info-label">Tarih</span>
-                <span className="info-value">{islem.tarih}</span>
+                <span className="info-value">{aktifIslem.tarih}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Doktor</span>
-                <span className="info-value">{islem.doktor}</span>
+                <span className="info-value">{aktifIslem.doktor}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Hastane</span>
-                <span className="info-value">{islem.hastane}</span>
+                <span className="info-value">{aktifIslem.hastane}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">İşlem Türü</span>
-                <span className="info-value">{islem.tur}</span>
+                <span className="info-value">{aktifIslem.tur}</span>
               </div>
               <div className="info-row highlight">
                 <span className="info-label">Tutar</span>
-                <span className="info-value amount">{islem.tutar}</span>
+                <span className="info-value amount">{aktifIslem.tutar}</span>
               </div>
             </IonCardContent>
           </IonCard>
@@ -155,7 +148,7 @@ const IslemDetayPage: React.FC = () => {
           <IonCard className="description-card">
             <IonCardContent>
               <h3 className="section-title">Açıklama</h3>
-              <p className="description-text">{islem.detay}</p>
+              <p className="description-text">{aktifIslem.detay}</p>
             </IonCardContent>
           </IonCard>
           {/* İndirim Bilgileri */}
@@ -184,7 +177,7 @@ const IslemDetayPage: React.FC = () => {
             </IonCardContent>
           </IonCard>
           {/* Rapor İndir Butonu */}
-          {islem.durum === 'tamamlandi' && (
+          {aktifIslem.durum === 'tamamlandi' && (
             <IonButton
               expand="block"
               className="download-button"

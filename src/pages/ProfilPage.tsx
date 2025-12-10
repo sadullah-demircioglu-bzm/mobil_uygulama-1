@@ -22,7 +22,11 @@ import {
 } from '@ionic/react';
 import { keyOutline, callOutline, mailOutline, chevronForwardOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { mockUser } from '../services/mockData';
+import { API } from '../services/apiEndpoints';
+import { http } from '../services/api';
+import { logout as performLogout } from '../services/auth';
+import type { UserProfileResponse } from '../types/api';
+import { useEffectOnce } from '../hooks/useEffectOnce';
 import './ProfilPage.css';
 
 interface ProfilPageProps {
@@ -40,12 +44,12 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [newPhone, setNewPhone] = useState('');
-  const [currentPhone, setCurrentPhone] = useState(mockUser.telefon || '');
+  const [currentPhone, setCurrentPhone] = useState('');
   const [phoneStep, setPhoneStep] = useState<'phone' | 'otp'>('phone');
   const [otpDigits, setOtpDigits] = useState<string[]>(Array(6).fill(''));
   const otpRefs = useRef<HTMLInputElement[]>([]);
   const [newEmail, setNewEmail] = useState('');
-  const [currentEmail, setCurrentEmail] = useState(mockUser.eposta || '');
+  const [currentEmail, setCurrentEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'email' | 'otp'>('email');
   const [emailOtpDigits, setEmailOtpDigits] = useState<string[]>(Array(6).fill(''));
   const emailOtpRefs = useRef<HTMLInputElement[]>([]);
@@ -53,8 +57,26 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastColor, setToastColor] = useState<'success' | 'danger'>('success');
+  const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
+  const [isPhoneSubmitting, setIsPhoneSubmitting] = useState(false);
+  const [isPhoneVerifying, setIsPhoneVerifying] = useState(false);
+  const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
+  const [isEmailVerifying, setIsEmailVerifying] = useState(false);
 
-  const handlePasswordChange = () => {
+  useEffectOnce(() => {
+    (async () => {
+      try {
+        const profile = await http.get<UserProfileResponse>(API.user.profile, undefined, { retryMeta: { retry: 1 } });
+        setCurrentPhone(profile?.telefon || '');
+        setCurrentEmail(profile?.eposta || '');
+      } catch {
+        // ignore
+      }
+    })();
+  });
+
+  const handlePasswordChange = async () => {
+    if (isPasswordSubmitting) return;
     if (!oldPassword || !newPassword || !confirmPassword) {
       setToastMessage('Lütfen tüm alanları doldurunuz.');
       setToastColor('danger');
@@ -76,16 +98,27 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
       return;
     }
 
-    setToastMessage('Şifreniz başarıyla değiştirildi.');
-    setToastColor('success');
-    setShowToast(true);
-    setShowPasswordModal(false);
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      setIsPasswordSubmitting(true);
+      await http.post(API.user.updatePassword, { oldPassword, newPassword });
+      setToastMessage('Şifreniz başarıyla değiştirildi.');
+      setToastColor('success');
+      setShowToast(true);
+      setShowPasswordModal(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (e: any) {
+      setToastMessage(e?.response?.data?.message || 'Şifre güncelleme başarısız.');
+      setToastColor('danger');
+      setShowToast(true);
+    } finally {
+      setIsPasswordSubmitting(false);
+    }
   };
 
-  const handlePhoneContinue = () => {
+  const handlePhoneContinue = async () => {
+    if (isPhoneSubmitting) return;
     if (!newPhone) {
       setToastMessage('Lütfen telefon numaranızı giriniz.');
       setToastColor('danger');
@@ -98,14 +131,24 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
       setShowToast(true);
       return;
     }
-    setToastMessage('Doğrulama kodu gönderildi.');
-    setToastColor('success');
-    setShowToast(true);
-    setPhoneStep('otp');
+    try {
+      setIsPhoneSubmitting(true);
+      await http.post(API.user.updatePhone, { phone: newPhone });
+      setToastMessage('Doğrulama kodu gönderildi.');
+      setToastColor('success');
+      setShowToast(true);
+      setPhoneStep('otp');
+    } catch (e: any) {
+      setToastMessage(e?.response?.data?.message || 'Telefon güncelleme isteği başarısız.');
+      setToastColor('danger');
+      setShowToast(true);
+      return;
+    }
     // Focus first OTP input after slight delay to ensure render
     setTimeout(() => {
       if (otpRefs.current[0]) otpRefs.current[0].focus();
     }, 50);
+    setIsPhoneSubmitting(false);
   };
 
   const handleOtpInputChange = (index: number, value: string) => {
@@ -130,7 +173,8 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     }
   };
 
-  const handleVerifyPhone = () => {
+  const handleVerifyPhone = async () => {
+    if (isPhoneVerifying) return;
     const code = otpDigits.join('');
     if (code.length !== 6) {
       setToastMessage('Lütfen 6 haneli kodu giriniz.');
@@ -138,17 +182,21 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
       setShowToast(true);
       return;
     }
-    if (code === '123456') {
+    try {
+      setIsPhoneVerifying(true);
+      await http.post(API.user.updatePhone, { phone: newPhone, code });
       setCurrentPhone(newPhone);
       setToastMessage('Telefonunuz güncellendi.');
       setToastColor('success');
       setShowToast(true);
       setShowPhoneModal(false);
       resetPhoneModalState();
-    } else {
-      setToastMessage('Hatalı doğrulama kodu.');
+    } catch (e: any) {
+      setToastMessage(e?.response?.data?.message || 'Hatalı doğrulama kodu.');
       setToastColor('danger');
       setShowToast(true);
+    } finally {
+      setIsPhoneVerifying(false);
     }
   };
 
@@ -158,7 +206,8 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     setNewPhone('');
   };
 
-  const handleEmailContinue = () => {
+  const handleEmailContinue = async () => {
+    if (isEmailSubmitting) return;
     if (!newEmail) {
       setToastMessage('Lütfen e-posta adresinizi giriniz.');
       setToastColor('danger');
@@ -172,13 +221,22 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
       setShowToast(true);
       return;
     }
-    setToastMessage('Doğrulama kodu gönderildi.');
-    setToastColor('success');
-    setShowToast(true);
-    setEmailStep('otp');
+    try {
+      setIsEmailSubmitting(true);
+      await http.post(API.user.updateEmail, { email: newEmail });
+      setToastMessage('Doğrulama kodu gönderildi.');
+      setToastColor('success');
+      setShowToast(true);
+      setEmailStep('otp');
+    } catch (e: any) {
+      setToastMessage(e?.response?.data?.message || 'E-posta güncelleme isteği başarısız.');
+      setToastColor('danger');
+      setShowToast(true);
+    }
     setTimeout(() => {
       if (emailOtpRefs.current[0]) emailOtpRefs.current[0].focus();
     }, 50);
+    setIsEmailSubmitting(false);
   };
 
   const handleEmailOtpInputChange = (index: number, value: string) => {
@@ -203,7 +261,8 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     }
   };
 
-  const handleVerifyEmail = () => {
+  const handleVerifyEmail = async () => {
+    if (isEmailVerifying) return;
     const code = emailOtpDigits.join('');
     if (code.length !== 6) {
       setToastMessage('Lütfen 6 haneli kodu giriniz.');
@@ -211,17 +270,21 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
       setShowToast(true);
       return;
     }
-    if (code === '123456') {
+    try {
+      setIsEmailVerifying(true);
+      await http.post(API.user.updateEmail, { email: newEmail, code });
       setCurrentEmail(newEmail);
       setToastMessage('E-posta adresiniz güncellendi.');
       setToastColor('success');
       setShowToast(true);
       setShowEmailModal(false);
       resetEmailModalState();
-    } else {
-      setToastMessage('Hatalı doğrulama kodu.');
+    } catch (e: any) {
+      setToastMessage(e?.response?.data?.message || 'Hatalı doğrulama kodu.');
       setToastColor('danger');
       setShowToast(true);
+    } finally {
+      setIsEmailVerifying(false);
     }
   };
 
@@ -231,10 +294,9 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     setNewEmail('');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('bezmialem_auth');
+  const handleLogout = async () => {
+    await performLogout(true);
     onLogout();
-    history.replace('/login');
   };
 
   return (
@@ -277,14 +339,14 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
                 <IonItem>
                   <IonLabel>
                     <p className="info-label">Ad Soyad</p>
-                    <h3 className="info-value">{mockUser.ad} {mockUser.soyad}</h3>
+                    <h3 className="info-value">{/* Ad Soyad sunucudan geliyorsa gösterilir */}</h3>
                   </IonLabel>
                 </IonItem>
 
                 <IonItem>
                   <IonLabel>
                     <p className="info-label">T.C. Kimlik No</p>
-                    <h3 className="info-value">{mockUser.tcKimlik}</h3>
+                    <h3 className="info-value">{/* T.C. Kimlik sunucudan geliyorsa gösterilir */}</h3>
                   </IonLabel>
                 </IonItem>
 

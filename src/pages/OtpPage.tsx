@@ -14,6 +14,9 @@ import {
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './OtpPage.css';
+import { API } from '../services/apiEndpoints';
+import { http } from '../services/api';
+import type { OtpVerifyRequest, OtpVerifyResponse } from '../types/api';
 
 interface OtpPageProps {
   onVerified: () => void;
@@ -24,6 +27,7 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     const firstInput = document.getElementById('otp-0') as HTMLInputElement;
@@ -48,7 +52,8 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
+    if (isVerifying) return;
     const otp = code.join('');
     if (otp.length !== 6) {
       setErrorMessage('Lütfen 6 haneli doğrulama kodunu giriniz.');
@@ -56,9 +61,28 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
       return;
     }
 
-    // TODO: Backend OTP doğrulama çağrısı
-    onVerified();
-    history.replace('/dashboard');
+    try {
+      setIsVerifying(true);
+      // In case LoginPage pushed tc/telefon via state
+      const navState = (history.location.state as any) || {};
+      const payload: OtpVerifyRequest = {
+        code: otp,
+        tc: navState?.tcKimlik,
+        phone: navState?.telefon
+      };
+      const res = await http.post<OtpVerifyResponse>(API.auth.otpVerify, payload);
+      if (res?.token) {
+        localStorage.setItem('auth_token', res.token);
+      }
+      onVerified();
+      history.replace('/dashboard');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'OTP doğrulaması başarısız.';
+      setErrorMessage(msg);
+      setShowError(true);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -93,7 +117,7 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
             ))}
           </div>
 
-          <IonButton expand="block" className="verify-button" onClick={handleVerify}>
+          <IonButton expand="block" className="verify-button" onClick={handleVerify} disabled={isVerifying}>
             Doğrula ve Devam Et
           </IonButton>
 

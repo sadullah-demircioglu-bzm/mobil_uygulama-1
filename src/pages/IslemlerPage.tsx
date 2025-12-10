@@ -16,6 +16,10 @@ import {
 import { receiptOutline, chevronForwardOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './IslemlerPage.css';
+import { API } from '../services/apiEndpoints';
+import { http } from '../services/api';
+import type { TransactionsListResponse, TransactionListItem } from '../types/api';
+import { useEffectOnce } from '../hooks/useEffectOnce';
 
 interface Islem {
   id: number;
@@ -31,127 +35,36 @@ interface Islem {
   toplamTutar?: number;
 }
 
-// Mock data - daha fazla item
-const mockIslemlerData: Islem[] = [
-  {
-    id: 1,
-    tarih: '15.11.2025',
-    tur: 'Poliklinik Muayenesi',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dr. Ahmet Yılmaz',
-    tutar: '₺187.50',
-    toplamTutar: 250,
-    indirimOrani: 25,
-    durum: 'tamamlandi',
-    detay: 'Kardiyoloji poliklinik kontrolü yapıldı.'
-  },
-  {
-    id: 2,
-    tarih: '10.11.2025',
-    tur: 'Laboratuvar Tetkiki',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dr. Ayşe Demir',
-    tutar: '₺130.00',
-    toplamTutar: 180,
-    indirimTutari: 50,
-    durum: 'tamamlandi',
-    detay: 'Tam kan sayımı ve biyokimya testleri yapıldı.'
-  },
-  {
-    id: 3,
-    tarih: '05.11.2025',
-    tur: 'Görüntüleme',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dr. Mehmet Kaya',
-    tutar: '₺357.00',
-    toplamTutar: 420,
-    indirimOrani: 15,
-    durum: 'tamamlandi',
-    detay: 'Akciğer grafisi çekildi.'
-  },
-  {
-    id: 4,
-    tarih: '01.11.2025',
-    tur: 'Fizik Tedavi',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Fzt. Zeynep Arslan',
-    tutar: '₺75.00',
-    toplamTutar: 150,
-    indirimTutari: 75,
-    durum: 'tamamlandi',
-    detay: 'Bel fıtığı için fizik tedavi seansı.'
-  },
-  {
-    id: 5,
-    tarih: '28.10.2025',
-    tur: 'Diş Tedavisi',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dt. Fatma Çelik',
-    tutar: '₺256.00',
-    toplamTutar: 320,
-    indirimOrani: 20,
-    durum: 'tamamlandi',
-    detay: 'Diş dolgu işlemi yapıldı.'
-  },
-  {
-    id: 6,
-    tarih: '25.10.2025',
-    tur: 'Kontrol Muayenesi',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dr. Can Öztürk',
-    tutar: '₺100.00',
-    toplamTutar: 200,
-    indirimTutari: 100,
-    durum: 'tamamlandi',
-    detay: 'Genel dahiliye kontrolü.'
-  },
-  {
-    id: 7,
-    tarih: '20.10.2025',
-    tur: 'EKG',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dr. Selin Yıldız',
-    tutar: '₺90.00',
-    toplamTutar: 100,
-    indirimOrani: 10,
-    durum: 'tamamlandi',
-    detay: 'Elektrokardiyografi çekildi.'
-  },
-  {
-    id: 8,
-    tarih: '15.10.2025',
-    tur: 'Ultrason',
-    hastane: 'Bezmialem Vakıf Üniversitesi Hastanesi',
-    doktor: 'Dr. Ali Şahin',
-    tutar: '₺210.00',
-    toplamTutar: 280,
-    indirimOrani: 25,
-    durum: 'tamamlandi',
-    detay: 'Batın ultrasonografi yapıldı.'
-  }
-];
+let allItemsCache: Islem[] = [];
 
 const IslemlerPage: React.FC = () => {
   const history = useHistory();
   const [islemler, setIslemler] = useState<Islem[]>([]);
   const [displayCount, setDisplayCount] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    // İlk yükleme
-    setTimeout(() => {
-      setIslemler(mockIslemlerData.slice(0, displayCount));
-      setIsLoading(false);
-    }, 500);
-  }, []);
+  useEffectOnce(() => {
+    (async () => {
+      try {
+        const data = await http.get<TransactionsListResponse>(API.transactions.list, undefined, { retryMeta: { retry: 1 } });
+        allItemsCache = Array.isArray(data) ? (data as TransactionListItem[]) : [];
+        setIslemler(allItemsCache.slice(0, displayCount));
+      } catch (e: any) {
+        setError(e?.response?.data?.message || 'İşlemler yüklenemedi.');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  });
 
   const loadMoreData = (event: CustomEvent<void>) => {
     setTimeout(() => {
       const newCount = displayCount + 5;
       setDisplayCount(newCount);
-      setIslemler(mockIslemlerData.slice(0, newCount));
+      setIslemler(allItemsCache.slice(0, newCount));
       (event.target as HTMLIonInfiniteScrollElement).complete();
-    }, 1000);
+    }, 500);
   };
 
   const handleCardClick = (islem: Islem) => {
@@ -165,6 +78,12 @@ const IslemlerPage: React.FC = () => {
         {isLoading ? (
           <div className="loading-container">
             <IonSpinner name="crescent" color="primary" />
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <IonText>
+              <p className="empty-text">{error}</p>
+            </IonText>
           </div>
         ) : islemler.length === 0 ? (
           <div className="empty-state">
@@ -209,7 +128,7 @@ const IslemlerPage: React.FC = () => {
 
             <IonInfiniteScroll
               threshold="100px"
-              disabled={displayCount >= mockIslemlerData.length}
+              disabled={displayCount >= allItemsCache.length}
               onIonInfinite={loadMoreData}
             >
               <IonInfiniteScrollContent

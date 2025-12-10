@@ -9,6 +9,9 @@ import {
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './LoginPage.css';
+import { API } from '../services/apiEndpoints';
+import { http } from '../services/api';
+import type { LoginVerifyRequest, LoginVerifyResponse } from '../types/api';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -20,6 +23,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [telefon, setTelefon] = useState('');
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // T.C. Kimlik No doğrulama algoritması
   const validateTCKimlik = (tc: string): boolean => {
@@ -36,8 +40,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return true;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     
     if (!tcKimlik || !telefon) {
       setErrorMessage('Lütfen tüm alanları doldurunuz.');
@@ -63,10 +68,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       return;
     }
 
-    // Mock: Backend'e doğrulama isteği gönderilecek ve OTP gönderilecek
-    // TODO: API çağrısı yapılacak
-    // OTP ekranına yönlendir
-    history.push('/otp', { tcKimlik, telefon });
+    try {
+      setIsSubmitting(true);
+      const payload: LoginVerifyRequest = { tc: tcKimlik, phone: telefon };
+      await http.post<LoginVerifyResponse>(API.auth.loginVerify, payload);
+      history.push('/otp', { tcKimlik, telefon });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Giriş doğrulaması başarısız.';
+      setErrorMessage(msg);
+      setShowError(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -121,6 +134,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               expand="block" 
               type="submit"
               className="login-button"
+              disabled={isSubmitting}
             >
               Giriş Yap
             </IonButton>

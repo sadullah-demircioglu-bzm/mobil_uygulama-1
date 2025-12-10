@@ -24,8 +24,10 @@ import './theme/global.css';
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
+// Note: React.StrictMode in React 18 intentionally double-invokes
+// effects in development to surface side-effects. This can cause
+// API calls in useEffect(() => {}, []) to run twice in dev.
+// We render App without StrictMode to avoid duplicate API calls during development.
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );
