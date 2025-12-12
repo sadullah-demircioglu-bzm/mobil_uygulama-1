@@ -14,9 +14,9 @@ import {
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './OtpPage.css';
-import { API } from '../services/apiEndpoints';
+import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
-import type { OtpVerifyRequest, OtpVerifyResponse } from '../types/api';
+import { buildProtectedPayload, loadOtpContext, setCurrentOtp, clearOtpContext } from '../services/otpContext';
 
 interface OtpPageProps {
   onVerified: () => void;
@@ -63,24 +63,24 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
 
     try {
       setIsVerifying(true);
-      // In case LoginPage pushed tc/telefon via state
-      const navState = (history.location.state as any) || {};
-      const payload: OtpVerifyRequest = {
-        code: otp,
-        phone: navState?.telefon,
-        tc_identity_no: navState?.loginType === 'tc' ? navState?.tcKimlik : undefined,
-        identity_no: navState?.loginType === 'identity' ? navState?.pasaportNo : undefined
-      };
-      const res = await http.post<OtpVerifyResponse>(API.auth.otpVerify, payload);
-      if (res?.token) {
-        localStorage.setItem('auth_token', res.token);
+      const ctx = loadOtpContext();
+      if (!ctx) {
+        setErrorMessage('OTP oturumu bulunamadı. Lütfen yeniden giriş yapınız.');
+        setShowError(true);
+        history.replace('/login');
+        return;
       }
+
+      setCurrentOtp(otp);
+      await http.post(EP_MAP.LOGIN, buildProtectedPayload({}));
       onVerified();
       history.replace('/dashboard');
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'OTP doğrulaması başarısız.';
+      const msg = err?.response?.data?.message || err?.message || 'OTP doğrulaması başarısız.';
+      clearOtpContext();
       setErrorMessage(msg);
       setShowError(true);
+      history.replace('/login');
     } finally {
       setIsVerifying(false);
     }

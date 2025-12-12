@@ -1,29 +1,35 @@
 // Strongly-typed backend API contracts
 
-export interface LoginVerifyRequest {
+export type ApiEnvelope<T> = {
+  success: boolean;
+  message: string;
+  data: T | null;
+  errors: string[] | null;
+};
+
+export type OtpAttemptRequest = {
+  type: string;
   tc_identity_no?: string;
   identity_no?: string; // Pasaport No
-  phone: string;
-}
-export interface LoginVerifyResponse {
-  success?: boolean;
-  requestId?: string;
-  message?: string;
-}
+  phone_number: string;
+};
 
-export interface OtpVerifyRequest {
-  code: string;
+export type OtpAttemptData = {
+  otp_cipher: string;
+};
+
+export type OtpAttemptResponse = ApiEnvelope<OtpAttemptData>;
+
+export type OtpProtectedFields = {
   tc_identity_no?: string;
   identity_no?: string;
-  phone?: string;
-}
-export interface OtpVerifyResponse {
-  token: string;
-}
+  phone_number: string;
+  otp: string;
+  otp_cipher: string;
+};
 
-export interface LogoutResponse {
-  success: boolean;
-}
+export type LoginRequest = OtpProtectedFields;
+export type LoginResponse = ApiEnvelope<UserProfileResponse>;
 
 export interface UserProfileResponse {
   ad?: string;
@@ -72,15 +78,10 @@ export type TransactionsListResponse = TransactionListItem[];
 
 export type TransactionDetailResponse = TransactionListItem;
 
-export interface ApplicationCheckRequest {
-  tc_identity_no?: string;
-  identity_no?: string;
-  phone: string;
-}
-export interface ApplicationCheckResponse {
-  durum: 'onaylandi' | 'beklemede' | 'reddedildi' | 'bulunamadi';
-  mesaj: string;
-  basvuruTarihi?: string;
-  sonGuncelleme?: string;
-  aciklama?: string;
-}
+export type ApplicationCheckRequest = OtpProtectedFields;
+export type ApplicationCheckResponse = {
+  status: "pending" | "under_review" | "approved" | "rejected" | "patient";
+  decision_notes: string;
+  created_at?: string;
+  updated_at?: string;
+};

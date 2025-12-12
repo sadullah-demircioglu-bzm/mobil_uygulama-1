@@ -11,10 +11,11 @@ import {
 } from '@ionic/react';
 import { downloadOutline } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
-import { API } from '../services/apiEndpoints';
+import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
-import type { TransactionDetailResponse } from '../types/api';
+import type { TransactionDetailResponse, TransactionsListResponse, TransactionListItem } from '../types/api';
 import { useEffectOnce } from '../hooks/useEffectOnce';
+import { buildProtectedPayload } from '../services/otpContext';
 import './IslemDetayPage.css';
 
 interface Islem {
@@ -50,8 +51,11 @@ const IslemDetayPage: React.FC = () => {
     if (!location.state?.islem && islemIdFromPath) {
       (async () => {
         try {
-          const data = await http.get<TransactionDetailResponse>(API.transactions.detail(islemIdFromPath), undefined, { retryMeta: { retry: 1 } });
-          setFetchedIslem(data as any);
+          const list = await http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, buildProtectedPayload({}), { retryMeta: { retry: 1 } });
+          const found = Array.isArray(list)
+            ? (list as TransactionListItem[]).find((tx) => Number(tx.id) === islemIdFromPath)
+            : null;
+          if (found) setFetchedIslem(found as any);
         } catch (e) {
           // ignore, show minimal UI
         }
@@ -63,26 +67,7 @@ const IslemDetayPage: React.FC = () => {
   if (!aktifIslem) return null;
 
   const handleDownloadReport = async () => {
-    if (!aktifIslem?.id) return;
-    setIsDownloading(true);
-    try {
-      const blob = await http.get<Blob>(API.transactions.report(aktifIslem.id), undefined, {
-        responseType: 'blob',
-        retryMeta: { retry: 1 }
-      } as any);
-      const url = window.URL.createObjectURL(blob as any);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Islem_Raporu_${aktifIslem.id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Rapor indirilirken bir hata oluştu.');
-    } finally {
-      setIsDownloading(false);
-    }
+    alert('Rapor indirme bu sürümde OTP sözleşmesine göre kapalı.');
   };
 
   const history = useHistory();

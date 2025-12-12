@@ -1,32 +1,9 @@
-export const API = {
-  auth: {
-    loginVerify: '/api/auth/login-verify',
-    otpVerify: '/api/auth/otp-verify',
-    logout: '/api/auth/logout'
-  },
-
-  user: {
-    profile: '/api/user/profile',
-    balance: '/api/user/balance',
-    discounts: '/api/user/discounts',
-    updatePhone: '/api/user/phone',
-    updateEmail: '/api/user/email',
-    updatePassword: '/api/user/password'
-  },
-
-  application: {
-    check: '/api/application/check'
-  },
-
-  transactions: {
-    list: '/api/transactions',
-    detail: (id: string | number) => `/api/transactions/${id}`,
-    report: (id: string | number) => `/api/transactions/${id}/report`
-  },
-
-  content: {
-    announcements: '/api/announcements'
-  }
+export const EP_MAP = {
+  OTP_ATTEMPT: '/api/otp/attempt',
+  LOGIN: '/api/patients/mobile/show',
+  CHECK_APPLICATION: '/api/applications/show',
+  UPDATE_PROFILE: '/api/patients/mobile/update',
+  TRANSACTIONS_LIST: '/api/patients/mobile/transactions'
 } as const;
 
-export type ApiEndpoints = typeof API;
+export type ApiEndpoints = typeof EP_MAP;

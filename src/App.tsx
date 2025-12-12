@@ -18,6 +18,7 @@ import {
   callOutline,
   personOutline
 } from 'ionicons/icons';
+import { clearOtpContext } from './services/otpContext';
 
 /* Lazy-loaded Pages */
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -67,6 +68,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.removeItem('bezmialem_auth');
+    clearOtpContext();
   };
 
   return (

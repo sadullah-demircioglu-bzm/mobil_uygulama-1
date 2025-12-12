@@ -16,10 +16,11 @@ import {
 import { receiptOutline, chevronForwardOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './IslemlerPage.css';
-import { API } from '../services/apiEndpoints';
+import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
 import type { TransactionsListResponse, TransactionListItem } from '../types/api';
 import { useEffectOnce } from '../hooks/useEffectOnce';
+import { buildProtectedPayload } from '../services/otpContext';
 
 interface Islem {
   id: number;
@@ -47,11 +48,12 @@ const IslemlerPage: React.FC = () => {
   useEffectOnce(() => {
     (async () => {
       try {
-        const data = await http.get<TransactionsListResponse>(API.transactions.list, undefined, { retryMeta: { retry: 1 } });
+        const data = await http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, buildProtectedPayload({}), { retryMeta: { retry: 1 } });
         allItemsCache = Array.isArray(data) ? (data as TransactionListItem[]) : [];
         setIslemler(allItemsCache.slice(0, displayCount));
       } catch (e: any) {
-        setError(e?.response?.data?.message || 'İşlemler yüklenemedi.');
+        setError(e?.response?.data?.message || e?.message || 'İşlemler yüklenemedi.');
+        history.replace('/login');
       } finally {
         setIsLoading(false);
       }

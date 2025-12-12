@@ -141,6 +141,13 @@
   color: #374151;
 }
 
+
+.status-info {
+  background-color: #F3F4F6;
+  color: #0b5ee5;
+}
+
+
 .result-title {
   font-size: 18px;
   font-weight: 600;

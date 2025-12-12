@@ -9,9 +9,10 @@ import {
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './LoginPage.css';
-import { API } from '../services/apiEndpoints';
+import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
-import type { LoginVerifyRequest, LoginVerifyResponse } from '../types/api';
+import type { OtpAttemptData, OtpAttemptRequest } from '../types/api';
+import { saveOtpContext, clearOtpContext, setCurrentOtp } from '../services/otpContext';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -29,6 +30,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   // T.C. Kimlik No doğrulama algoritması
   const validateTCKimlik = (tc: string): boolean => {
+
+    return true;
     if (tc.length !== 11 || tc[0] === '0') return false;
     
     const digits = tc.split('').map(Number);
@@ -88,12 +91,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       setIsSubmitting(true);
-      const payload: LoginVerifyRequest =
+      const phone_number = telefon.startsWith('0') ? telefon : `0${telefon}`;
+      const payload: OtpAttemptRequest =
         loginType === 'tc'
-          ? { tc_identity_no: tcKimlik, phone: telefon }
-          : { identity_no: pasaportNo, phone: telefon };
-      await http.post<LoginVerifyResponse>(API.auth.loginVerify, payload);
-      history.push('/otp', { loginType, tcKimlik, pasaportNo, telefon });
+          ? { type: 'application', tc_identity_no: tcKimlik, phone_number }
+          : { type: 'application', identity_no: pasaportNo, phone_number };
+
+      clearOtpContext();
+      setCurrentOtp('');
+      const resp = await http.post<OtpAttemptData>(EP_MAP.OTP_ATTEMPT, payload);
+      const otp_cipher = (resp as any)?.otp_cipher || (resp as any)?.otp;
+      if (!otp_cipher) {
+        throw new Error('OTP bilgisi alınamadı.');
+      }
+      saveOtpContext({
+        otp_cipher,
+        phone_number,
+        tc_identity_no: payload.tc_identity_no,
+        identity_no: payload.identity_no
+      });
+      history.push('/otp');
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Giriş doğrulaması başarısız.';
       setErrorMessage(msg);

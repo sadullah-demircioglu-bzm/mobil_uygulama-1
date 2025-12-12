@@ -17,32 +17,11 @@ const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 15000
 });
-
-// Attach token automatically
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers = config.headers || {};
-    (config.headers as any).Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Centralized error handling + retry + 401 logout
+// Centralized error handling + retry
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const status = error.response?.status;
-
-    // 401 => auto logout
-    if (status === 401) {
-      try {
-        localStorage.removeItem('auth_token');
-        localStorage.clear();
-      } finally {
-        if (typeof window !== 'undefined') window.location.href = '/login';
-      }
-    }
 
     // Retry mechanism (simple exponential backoff)
     const config = error.config as AxiosRequestConfig | undefined;
@@ -69,18 +48,35 @@ api.interceptors.response.use(
   }
 );
 
+function unwrapResponse<T>(response: AxiosResponse<any>) {
+  const payload = response.data as any;
+  const hasContractShape = payload && typeof payload === 'object' && 'success' in payload;
+
+  if (hasContractShape) {
+    if (payload.success === false) {
+      const err = new Error(payload.message || 'Request failed');
+      (err as any).response = { data: payload };
+      throw err;
+    }
+    // For contract responses, return the inner data
+    if ('data' in payload) return payload.data as T;
+  }
+
+  return payload as T;
+}
+
 export const http = {
   get<T = any>(url: string, params?: Record<string, any>, options?: AxiosRequestConfig) {
-    return api.get<T>(url, { params, ...(options || {}) }).then((r) => r.data as T);
+    return api.get<T>(url, { params, ...(options || {}) }).then((r) => unwrapResponse<T>(r));
   },
   post<T = any>(url: string, body?: any, options?: AxiosRequestConfig) {
-    return api.post<T>(url, body, options).then((r) => r.data as T);
+    return api.post<T>(url, body, options).then((r) => unwrapResponse<T>(r));
   },
   put<T = any>(url: string, body?: any, options?: AxiosRequestConfig) {
-    return api.put<T>(url, body, options).then((r) => r.data as T);
+    return api.put<T>(url, body, options).then((r) => unwrapResponse<T>(r));
   },
   delete<T = any>(url: string, options?: AxiosRequestConfig) {
-    return api.delete<T>(url, options).then((r) => r.data as T);
+    return api.delete<T>(url, options).then((r) => unwrapResponse<T>(r));
   }
 };
 

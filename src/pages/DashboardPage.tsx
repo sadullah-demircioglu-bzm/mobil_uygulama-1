@@ -15,9 +15,10 @@ import {
 } from '@ionic/react';
 import { calendarOutline, receiptOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { API } from '../services/apiEndpoints';
+import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
 import { useEffectOnce } from '../hooks/useEffectOnce';
+import { buildProtectedPayload } from '../services/otpContext';
 import type {
   BalanceResponse,
   DiscountsResponse,
@@ -68,22 +69,21 @@ const DashboardPage: React.FC = () => {
     let mounted = true;
     (async () => {
       try {
-        const [p, b, d, a, t] = await Promise.all([
-          http.get<UserProfileResponse>(API.user.profile, undefined, { retryMeta: { retry: 1 } }),
-          http.get<BalanceResponse>(API.user.balance, undefined, { retryMeta: { retry: 1 } }),
-          http.get<DiscountsResponse>(API.user.discounts, undefined, { retryMeta: { retry: 1 } }),
-          http.get<AnnouncementItem[]>(API.content.announcements, undefined, { retryMeta: { retry: 1 } }),
-          http.get<TransactionsListResponse>(API.transactions.list, undefined, { retryMeta: { retry: 1 } })
+        const payload = buildProtectedPayload({});
+        const [p, t] = await Promise.all([
+          http.post<UserProfileResponse>(EP_MAP.LOGIN, payload),
+          http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, payload)
         ]);
         if (!mounted) return;
         setProfile(p || null);
-        setBalance(b || null);
-        setDiscounts(Array.isArray(d) ? d : []);
-        setAnnouncements(Array.isArray(a) ? a : []);
+        setBalance(null);
+        setDiscounts([]);
+        setAnnouncements([]);
         setTransactions(Array.isArray(t) ? t : []);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.response?.data?.message || 'Veriler yüklenemedi.');
+        setError(e?.response?.data?.message || e?.message || 'Veriler yüklenemedi.');
+        history.replace('/login');
       } finally {
         if (mounted) setLoading(false);
       }
