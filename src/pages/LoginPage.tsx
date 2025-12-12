@@ -20,7 +20,9 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const history = useHistory();
   const [tcKimlik, setTcKimlik] = useState('');
+  const [pasaportNo, setPasaportNo] = useState('');
   const [telefon, setTelefon] = useState('');
+  const [loginType, setLoginType] = useState<'tc' | 'identity'>('tc');
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,24 +46,40 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     e.preventDefault();
     if (isSubmitting) return;
     
-    if (!tcKimlik || !telefon) {
-      setErrorMessage('Lütfen tüm alanları doldurunuz.');
+    if (loginType === 'tc') {
+      if (!tcKimlik) {
+        setErrorMessage('Lütfen T.C. Kimlik No giriniz.');
+        setShowError(true);
+        return;
+      }
+      if (tcKimlik.length !== 11) {
+        setErrorMessage('T.C. Kimlik No 11 haneli olmalıdır.');
+        setShowError(true);
+        return;
+      }
+      if (!validateTCKimlik(tcKimlik)) {
+        setErrorMessage('Geçersiz T.C. Kimlik No.');
+        setShowError(true);
+        return;
+      }
+    } else {
+      if (!pasaportNo) {
+        setErrorMessage('Lütfen Pasaport No giriniz.');
+        setShowError(true);
+        return;
+      }
+      if (pasaportNo.length < 6) {
+        setErrorMessage('Pasaport No en az 6 karakter olmalıdır.');
+        setShowError(true);
+        return;
+      }
+    }
+
+    if (!telefon) {
+      setErrorMessage('Lütfen telefon numarası giriniz.');
       setShowError(true);
       return;
     }
-
-    if (tcKimlik.length !== 11) {
-      setErrorMessage('T.C. Kimlik No 11 haneli olmalıdır.');
-      setShowError(true);
-      return;
-    }
-
-    if (!validateTCKimlik(tcKimlik)) {
-      setErrorMessage('Geçersiz T.C. Kimlik No.');
-      setShowError(true);
-      return;
-    }
-
     if (telefon.length !== 10) {
       setErrorMessage('Telefon numarası 10 haneli olmalıdır.');
       setShowError(true);
@@ -70,9 +88,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       setIsSubmitting(true);
-      const payload: LoginVerifyRequest = { tc: tcKimlik, phone: telefon };
+      const payload: LoginVerifyRequest =
+        loginType === 'tc'
+          ? { tc_identity_no: tcKimlik, phone: telefon }
+          : { identity_no: pasaportNo, phone: telefon };
       await http.post<LoginVerifyResponse>(API.auth.loginVerify, payload);
-      history.push('/otp', { tcKimlik, telefon });
+      history.push('/otp', { loginType, tcKimlik, pasaportNo, telefon });
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Giriş doğrulaması başarısız.';
       setErrorMessage(msg);
@@ -102,19 +123,55 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="login-form">
-            <div className="input-wrapper">
-              <label htmlFor="tc-kimlik" className="input-label">T.C. Kimlik No</label>
-              <input
-                id="tc-kimlik"
-                type="text"
-                maxLength={11}
-                value={tcKimlik}
-                onChange={(e) => setTcKimlik(e.target.value.replace(/\D/g, ''))}
-                className="custom-input"
-                placeholder="11 haneli kimlik numaranız"
-                inputMode="numeric"
-              />
+            <div className="radio-group">
+              <label className={"radio-option" + (loginType === 'tc' ? ' active' : '')}>
+                <input
+                  type="radio"
+                  name="login-type"
+                  checked={loginType === 'tc'}
+                  onChange={() => setLoginType('tc')}
+                />
+                T.C. Kimlik
+              </label>
+              <label className={"radio-option" + (loginType === 'identity' ? ' active' : '')}>
+                <input
+                  type="radio"
+                  name="login-type"
+                  checked={loginType === 'identity'}
+                  onChange={() => setLoginType('identity')}
+                />
+                Diğer
+              </label>
             </div>
+
+            {loginType === 'tc' ? (
+              <div className="input-wrapper">
+                <label htmlFor="tc-kimlik" className="input-label">T.C. Kimlik No</label>
+                <input
+                  id="tc-kimlik"
+                  type="text"
+                  maxLength={11}
+                  value={tcKimlik}
+                  onChange={(e) => setTcKimlik(e.target.value.replace(/\D/g, ''))}
+                  className="custom-input"
+                  placeholder="11 haneli kimlik numaranız"
+                  inputMode="numeric"
+                />
+              </div>
+            ) : (
+              <div className="input-wrapper">
+                <label htmlFor="pasaport-no" className="input-label">Pasaport No</label>
+                <input
+                  id="pasaport-no"
+                  type="text"
+                  value={pasaportNo}
+                  onChange={(e) => setPasaportNo(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                  className="custom-input"
+                  placeholder="Pasaport numaranız"
+                  autoComplete="off"
+                />
+              </div>
+            )}
 
             <div className="input-wrapper">
               <label htmlFor="telefon" className="input-label">Telefon Numarası</label>

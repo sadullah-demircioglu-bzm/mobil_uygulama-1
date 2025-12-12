@@ -67,8 +67,9 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
       const navState = (history.location.state as any) || {};
       const payload: OtpVerifyRequest = {
         code: otp,
-        tc: navState?.tcKimlik,
-        phone: navState?.telefon
+        phone: navState?.telefon,
+        tc_identity_no: navState?.loginType === 'tc' ? navState?.tcKimlik : undefined,
+        identity_no: navState?.loginType === 'identity' ? navState?.pasaportNo : undefined
       };
       const res = await http.post<OtpVerifyResponse>(API.auth.otpVerify, payload);
       if (res?.token) {

@@ -30,7 +30,9 @@ interface BasvuruSonuc {
 
 const BasvuruKontroluPage: React.FC = () => {
   const [tcKimlik, setTcKimlik] = useState('');
+  const [pasaportNo, setPasaportNo] = useState('');
   const [telefon, setTelefon] = useState('');
+  const [loginType, setLoginType] = useState<'tc' | 'identity'>('tc');
   const [loading, setLoading] = useState(false);
   const [sonuc, setSonuc] = useState<BasvuruSonuc | null>(null);
   const [showError, setShowError] = useState(false);
@@ -55,20 +57,37 @@ const BasvuruKontroluPage: React.FC = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!tcKimlik || !telefon) {
-      setErrorMessage('Lütfen tüm alanları doldurunuz.');
-      setShowError(true);
-      return;
+    if (loginType === 'tc') {
+      if (!tcKimlik) {
+        setErrorMessage('Lütfen T.C. Kimlik No giriniz.');
+        setShowError(true);
+        return;
+      }
+      if (tcKimlik.length !== 11) {
+        setErrorMessage('T.C. Kimlik No 11 haneli olmalıdır.');
+        setShowError(true);
+        return;
+      }
+      if (!validateTCKimlik(tcKimlik)) {
+        setErrorMessage('Geçersiz T.C. Kimlik No.');
+        setShowError(true);
+        return;
+      }
+    } else {
+      if (!pasaportNo) {
+        setErrorMessage('Lütfen Pasaport No giriniz.');
+        setShowError(true);
+        return;
+      }
+      if (pasaportNo.length < 6) {
+        setErrorMessage('Pasaport No en az 6 karakter olmalıdır.');
+        setShowError(true);
+        return;
+      }
     }
 
-    if (tcKimlik.length !== 11) {
-      setErrorMessage('T.C. Kimlik No 11 haneli olmalıdır.');
-      setShowError(true);
-      return;
-    }
-
-    if (!validateTCKimlik(tcKimlik)) {
-      setErrorMessage('Geçersiz T.C. Kimlik No.');
+    if (!telefon) {
+      setErrorMessage('Lütfen telefon numarası giriniz.');
       setShowError(true);
       return;
     }
@@ -85,7 +104,10 @@ const BasvuruKontroluPage: React.FC = () => {
     setSonuc(null);
 
     try {
-      const payload: ApplicationCheckRequest = { tc: tcKimlik, phone: telefon };
+      const payload: ApplicationCheckRequest =
+        loginType === 'tc'
+          ? { tc_identity_no: tcKimlik, phone: telefon }
+          : { identity_no: pasaportNo, phone: telefon };
       const resp = await http.post<ApplicationCheckResponse>(API.application.check, payload);
       setSonuc(resp as BasvuruSonuc);
     } catch (error: any) {
@@ -124,23 +146,61 @@ const BasvuruKontroluPage: React.FC = () => {
             
             <h2 className="page-title">Başvuru Durumunu Sorgula</h2>
             <p className="page-description">
-              Kart başvurunuzun durumunu öğrenmek için T.C. Kimlik No ve telefon numaranızı giriniz.
+              Kart başvurunuzun durumunu öğrenmek için T.C. Kimlik No veya Pasaport No ve telefon numaranızı giriniz.
             </p>
           </IonText>
 
           <form onSubmit={handleSubmit} className="basvuru-form">
+            <div className="radio-group">
+              <label className={"radio-option" + (loginType === 'tc' ? ' active' : '')}>
+                <input
+                  type="radio"
+                  name="login-type"
+                  checked={loginType === 'tc'}
+                  onChange={() => setLoginType('tc')}
+                />
+                T.C. Kimlik
+              </label>
+              <label className={"radio-option" + (loginType === 'identity' ? ' active' : '')}>
+                <input
+                  type="radio"
+                  name="login-type"
+                  checked={loginType === 'identity'}
+                  onChange={() => setLoginType('identity')}
+                />
+                Diğer
+              </label>
+            </div>
+
             <div className="input-wrapper">
-              <label htmlFor="tc-kimlik" className="input-label">T.C. Kimlik No</label>
-              <input
-                id="tc-kimlik"
-                type="text"
-                maxLength={11}
-                value={tcKimlik}
-                onChange={(e) => setTcKimlik(e.target.value.replace(/\D/g, ''))}
-                className="custom-input"
-                placeholder="11 haneli kimlik numaranız"
-                inputMode="numeric"
-              />
+              {loginType === 'tc' ? (
+                <>
+                  <label htmlFor="tc-kimlik" className="input-label">T.C. Kimlik No</label>
+                  <input
+                    id="tc-kimlik"
+                    type="text"
+                    maxLength={11}
+                    value={tcKimlik}
+                    onChange={(e) => setTcKimlik(e.target.value.replace(/\D/g, ''))}
+                    className="custom-input"
+                    placeholder="11 haneli kimlik numaranız"
+                    inputMode="numeric"
+                  />
+                </>
+              ) : (
+                <>
+                  <label htmlFor="pasaport-no" className="input-label">Pasaport No</label>
+                  <input
+                    id="pasaport-no"
+                    type="text"
+                    value={pasaportNo}
+                    onChange={(e) => setPasaportNo(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                    className="custom-input"
+                    placeholder="Pasaport numaranız"
+                    autoComplete="off"
+                  />
+                </>
+              )}
             </div>
 
             <div className="input-wrapper">
@@ -161,7 +221,6 @@ const BasvuruKontroluPage: React.FC = () => {
               expand="block" 
               type="submit"
               className="submit-button"
-              disabled={loading}
               disabled={loading || isSubmitting}
             >
               {loading ? <IonSpinner name="crescent" /> : 'Sorgula'}

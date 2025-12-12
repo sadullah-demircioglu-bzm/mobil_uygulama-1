@@ -1,7 +1,8 @@
 // Strongly-typed backend API contracts
 
 export interface LoginVerifyRequest {
-  tc: string;
+  tc_identity_no?: string;
+  identity_no?: string; // Pasaport No
   phone: string;
 }
 export interface LoginVerifyResponse {
@@ -12,7 +13,8 @@ export interface LoginVerifyResponse {
 
 export interface OtpVerifyRequest {
   code: string;
-  tc?: string;
+  tc_identity_no?: string;
+  identity_no?: string;
   phone?: string;
 }
 export interface OtpVerifyResponse {
@@ -71,7 +73,8 @@ export type TransactionsListResponse = TransactionListItem[];
 export type TransactionDetailResponse = TransactionListItem;
 
 export interface ApplicationCheckRequest {
-  tc: string;
+  tc_identity_no?: string;
+  identity_no?: string;
   phone: string;
 }
 export interface ApplicationCheckResponse {

@@ -29,6 +29,29 @@
   margin-bottom: 32px;
 }
 
+.radio-group {
+  display: flex;
+  gap: 12px;
+  border-radius: 8px;
+}
+
+.radio-option {
+  display: flex;
+  flex:1;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.radio-option.active {
+  border-color: #93153c;
+  background: #FFFFFF;
+}
+
 /* Input styles copied from LoginPage for visual consistency */
 .input-wrapper {
   display: flex;
