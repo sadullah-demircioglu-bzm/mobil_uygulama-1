@@ -22,10 +22,10 @@ import { buildProtectedPayload } from '../services/otpContext';
 import type {
   BalanceResponse,
   DiscountsResponse,
-  AnnouncementItem,
-  TransactionsListResponse,
+  TransactionStatus,
   TransactionListItem as TransactionItem,
-  UserProfileResponse
+  UserProfileResponse,
+  PatientShowResponse
 } from '../types/api';
 import './DashboardPage.css';
 
@@ -69,17 +69,13 @@ const DashboardPage: React.FC = () => {
     let mounted = true;
     (async () => {
       try {
-        const payload = buildProtectedPayload({});
-        const [p, t] = await Promise.all([
-          http.post<UserProfileResponse>(EP_MAP.LOGIN, payload),
-          http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, payload)
-        ]);
+        const showData = await http.post<PatientShowResponse>(EP_MAP.LOGIN, buildProtectedPayload({}));
         if (!mounted) return;
-        setProfile(p || null);
-        setBalance(null);
-        setDiscounts([]);
+        setProfile(mapPatientToProfile(showData.patient));
+        setBalance(deriveBalance(showData.summary));
+        setDiscounts(mapDiscounts(showData.summary));
         setAnnouncements([]);
-        setTransactions(Array.isArray(t) ? t : []);
+        setTransactions(mapTransactions(showData.summary));
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.response?.data?.message || e?.message || 'Veriler yüklenemedi.');
@@ -90,6 +86,63 @@ const DashboardPage: React.FC = () => {
     })();
     return () => { mounted = false; };
   });
+
+  const formatCardNumber = (raw?: string) => {
+    if (!raw) return '';
+    const digits = raw.replace(/\D/g, '');
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  const mapPatientToProfile = (patient?: PatientShowResponse['patient']): UserProfile | null => {
+    if (!patient) return null;
+    return {
+      id: patient.id,
+      patient_id: patient.id,
+      ad: patient.first_name,
+      soyad: patient.last_name,
+      kartNo: formatCardNumber(patient.card_number),
+      telefon: patient.phone_number || undefined,
+      eposta: patient.email || undefined,
+      tcKimlik: patient.tc_identity_no || undefined
+    };
+  };
+
+  const deriveBalance = (summary?: PatientShowResponse['summary']): BalanceResponse | null => {
+    if (!summary) return null;
+    const latestBalance = summary.kpis?.remaining_balance?.current ?? summary.monthly_balance?.[summary.monthly_balance.length - 1]?.balance;
+    if (latestBalance === undefined || latestBalance === null) return null;
+    return { amount: latestBalance, currency: 'TRY' };
+  };
+
+  const mapDiscounts = (summary?: PatientShowResponse['summary']): Discount[] => {
+    if (!summary?.active_discounts_details) return [];
+    return summary.active_discounts_details.map((d) => ({ tur: d.code || d.name, oran: d.value }));
+  };
+
+  const mapTransactions = (summary?: PatientShowResponse['summary']): TransactionListItem[] => {
+    const usage = summary?.monthly_credit_discount_usage || [];
+    const balances = summary?.monthly_balance || [];
+    const balanceLookup = new Map(balances.map((b) => [b.month, b.balance]));
+
+    return usage.map((item) => {
+      const status: TransactionStatus = item.credit_spent > 0 ? 'tamamlandi' : 'beklemede';
+      const creditAdded = Number(item.credit_added || 0);
+      const creditSpent = Number(item.credit_spent || 0);
+      const discount = Number(item.discount_applied || 0);
+      const displayedAmount = creditSpent || creditAdded;
+      const balanceForMonth = balanceLookup.get(item.month);
+
+      return {
+        id: Number(`${item.year}${String(item.month_number).padStart(2, '0')}`),
+        tarih: item.label || item.month,
+        tur: 'Aylık Harcama',
+        hastane: `Yükleme: ${creditAdded.toLocaleString('tr-TR')} ₺ | İndirim: ${discount.toLocaleString('tr-TR')} ₺`,
+        tutar: `${displayedAmount.toLocaleString('tr-TR')} ₺`,
+        durum: status,
+        toplamTutar: balanceForMonth
+      };
+    });
+  };
 
   return (
     <IonPage>

@@ -68,21 +68,57 @@ const DestekPage: React.FC = () => {
               </div>
             </IonAccordion>
 
-            <IonAccordion value="3">
-              <IonItem slot="header">
-                <IonLabel>Şifremi unuttum ne yapmalıyım?</IonLabel>
-              </IonItem>
-              <div className="accordion-content" slot="content">
-                Giriş ekranında "Şifremi Unuttum" linkine tıklayarak şifrenizi sıfırlayabilirsiniz.
-              </div>
-            </IonAccordion>
-
             <IonAccordion value="4">
               <IonItem slot="header">
                 <IonLabel>Randevu nasıl alabilirim?</IonLabel>
               </IonItem>
               <div className="accordion-content" slot="content">
-                Telefon (0212 XXX XX XX) veya online sistemimizden randevu alabilirsiniz.
+                Telefon (0212 453 17 00) veya online sistemimizden randevu alabilirsiniz.
+              </div>
+            </IonAccordion>
+
+            <IonAccordion value="5">
+              <IonItem slot="header">
+                <IonLabel>Kartı nasıl alırım?</IonLabel>
+              </IonItem>
+              <div className="accordion-content" slot="content">
+                Başvurunuzu uygulama üzerinden tamamlayıp onaylandığında kartınız dijital olarak tanımlanır; fiziksel kart gerekmez.
+              </div>
+            </IonAccordion>
+
+            <IonAccordion value="6">
+              <IonItem slot="header">
+                <IonLabel>Bakiye nasıl yüklenir?</IonLabel>
+              </IonItem>
+              <div className="accordion-content" slot="content">
+                Hesabınıza aktarılan tutarlar uygulamada otomatik görünür; harcamalarınızı ve kalan bakiyeyi "İşlemler" ve "Profil" sayfalarından takip edebilirsiniz.
+              </div>
+            </IonAccordion>
+
+            <IonAccordion value="7">
+              <IonItem slot="header">
+                <IonLabel>İndirim kodlarım nerede?</IonLabel>
+              </IonItem>
+              <div className="accordion-content" slot="content">
+                Aktif indirimleriniz "Profil" ve "Dashboard" sayfalarında listelenir; ilgili poliklinik işlemlerinde otomatik uygulanır.
+              </div>
+            </IonAccordion>
+
+            <IonAccordion value="8">
+              <IonItem slot="header">
+                <IonLabel>Başvurum ne kadar sürer?</IonLabel>
+              </IonItem>
+              <div className="accordion-content" slot="content">
+                Başvurular genellikle 1-2 iş günü içinde değerlendirilir; durumunuzu "Başvuru Kontrolü" ekranından görebilirsiniz.
+              </div>
+            </IonAccordion>
+
+            <IonAccordion value="9">
+              <IonItem slot="header">
+                <IonLabel>Kayıp/çalıntı durumda ne yapmalıyım?</IonLabel>
+              </IonItem>
+              <div className="accordion-content" slot="content">
+                Destek üzerinden bize bildirirseniz kartınız anında güvenli moda alınır ve yenisi dijital olarak tanımlanır.
               </div>
             </IonAccordion>
           </IonAccordionGroup>

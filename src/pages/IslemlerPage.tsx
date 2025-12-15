@@ -48,8 +48,13 @@ const IslemlerPage: React.FC = () => {
   useEffectOnce(() => {
     (async () => {
       try {
-        const data = await http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, buildProtectedPayload({}), { retryMeta: { retry: 1 } });
-        allItemsCache = Array.isArray(data) ? (data as TransactionListItem[]) : [];
+        const resp = await http.post<any>(
+          EP_MAP.TRANSACTIONS_LIST,
+          buildProtectedPayload({ page: 1, limit: 50 }),
+          { retryMeta: { retry: 1 } }
+        );
+        const items: any[] = Array.isArray(resp) ? resp : (resp?.items ?? []);
+        allItemsCache = items.map(mapApiItemToIslem);
         setIslemler(allItemsCache.slice(0, displayCount));
       } catch (e: any) {
         setError(e?.response?.data?.message || e?.message || 'İşlemler yüklenemedi.');
@@ -59,6 +64,48 @@ const IslemlerPage: React.FC = () => {
       }
     })();
   });
+
+  const formatAmount = (value: any) => {
+    const n = Number(String(value).replace(/[^-\d.]/g, ''));
+    if (Number.isNaN(n)) return String(value || '');
+    const formatted = `${Math.abs(n).toLocaleString('tr-TR')} ₺`;
+    return n < 0 ? `- ${formatted}` : formatted;
+  };
+
+  const formatDate = (iso?: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('tr-TR');
+  };
+
+  const mapApiItemToIslem = (item: any): Islem => {
+    const turMap: Record<string, string> = {
+      CREDIT_ADD: 'Bakiye Yükleme',
+      CREDIT_SPEND: 'Harcama',
+      CREDIT_ROLLBACK: 'İade',
+      DISCOUNT_APPLY: 'İndirim Uygulama',
+      DISCOUNT_REBATE: 'İndirim İadesi'
+    };
+    const durum: Islem['durum'] = item?.status === 'RECEIVED' ? 'tamamlandi' : 'beklemede';
+    const doktor = item?.metadata?.doctor_name || '';
+    const hastane = item?.metadata?.b2b_client_name || item?.client?.name || '';
+    const indirimOrani = undefined;
+    const indirimTutari = item?.discount_amount ? Number(item.discount_amount) : undefined;
+    const detay = item?.notes || '';
+    return {
+      id: item?.id,
+      tarih: formatDate(item?.created_at),
+      tur: turMap[item?.type] || item?.type || 'İşlem',
+      hastane,
+      doktor,
+      tutar: formatAmount(item?.amount),
+      durum,
+      detay,
+      indirimOrani,
+      indirimTutari,
+      toplamTutar: item?.original_amount ? Number(item.original_amount) : undefined
+    };
+  };
 
   const loadMoreData = (event: CustomEvent<void>) => {
     setTimeout(() => {

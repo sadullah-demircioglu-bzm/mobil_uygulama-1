@@ -51,7 +51,7 @@ const IslemDetayPage: React.FC = () => {
     if (!location.state?.islem && islemIdFromPath) {
       (async () => {
         try {
-          const list = await http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, buildProtectedPayload({}), { retryMeta: { retry: 1 } });
+          const list = await http.post<TransactionsListResponse>(EP_MAP.TRANSACTIONS_LIST, buildProtectedPayload({ page: 1, limit: 50 }), { retryMeta: { retry: 1 } });
           const found = Array.isArray(list)
             ? (list as TransactionListItem[]).find((tx) => Number(tx.id) === islemIdFromPath)
             : null;

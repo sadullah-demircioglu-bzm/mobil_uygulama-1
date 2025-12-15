@@ -1,4 +1,6 @@
 export type OtpContext = {
+  id?: number;
+  patient_id?: number;
   tc_identity_no?: string;
   identity_no?: string;
   phone_number: string;
@@ -46,5 +48,26 @@ export function buildProtectedPayload<T extends Record<string, any>>(body?: T) {
   const ctx = loadOtpContext();
   if (!ctx) throw new Error('OTP context missing');
   if (!currentOtp) throw new Error('OTP missing');
-  return { ...ctx, ...(body || {}), otp: currentOtp } as T & OtpContext & { otp: string };
+  
+  const basePayload = {
+    tc_identity_no: ctx.tc_identity_no,
+    identity_no: ctx.identity_no,
+    phone_number: ctx.phone_number,
+    otp_cipher: ctx.otp_cipher,
+    otp: currentOtp
+  };
+  
+  // Include id and patient_id if available
+  let payload: any = { ...basePayload };
+  if (ctx.id) {
+    payload.id = ctx.id;
+  }
+  if (ctx.patient_id) {
+    payload.patient_id = ctx.patient_id;
+  }
+  
+  // Merge with body parameters
+  payload = { ...payload, ...(body || {}) };
+    
+  return payload as T & OtpContext & { otp: string };
 }

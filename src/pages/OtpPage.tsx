@@ -16,7 +16,7 @@ import { useHistory } from 'react-router-dom';
 import './OtpPage.css';
 import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
-import { buildProtectedPayload, loadOtpContext, setCurrentOtp, clearOtpContext } from '../services/otpContext';
+import { buildProtectedPayload, loadOtpContext, saveOtpContext, setCurrentOtp, clearOtpContext } from '../services/otpContext';
 
 interface OtpPageProps {
   onVerified: () => void;
@@ -72,7 +72,22 @@ const OtpPage: React.FC<OtpPageProps> = ({ onVerified }) => {
       }
 
       setCurrentOtp(otp);
-      await http.post(EP_MAP.LOGIN, buildProtectedPayload({}));
+      const loginResponse = await http.post(EP_MAP.LOGIN, buildProtectedPayload({}));
+      
+      // Save id from patient object to OTP context
+      if (loginResponse) {
+        const updatedCtx = { ...ctx };
+        // Check if response contains patient object with id
+        if ((loginResponse as any).patient && (loginResponse as any).patient.id) {
+          updatedCtx.patient_id = (loginResponse as any).patient.id;
+        }
+        if ((loginResponse as any).patient_id) {
+          updatedCtx.patient_id = (loginResponse as any).patient_id;
+        }
+        // Save updated context
+        saveOtpContext(updatedCtx);
+      }
+      
       onVerified();
       history.replace('/dashboard');
     } catch (err: any) {

@@ -13,6 +13,7 @@ import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
 import type { OtpAttemptData, OtpAttemptRequest } from '../types/api';
 import { saveOtpContext, clearOtpContext, setCurrentOtp } from '../services/otpContext';
+import PhoneInput from '../components/PhoneInput';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -23,6 +24,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [tcKimlik, setTcKimlik] = useState('');
   const [pasaportNo, setPasaportNo] = useState('');
   const [telefon, setTelefon] = useState('');
+  const [countryCode, setCountryCode] = useState('+90');
   const [loginType, setLoginType] = useState<'tc' | 'identity'>('tc');
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -91,11 +93,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       setIsSubmitting(true);
-      const phone_number = telefon.startsWith('0') ? telefon : `0${telefon}`;
+      const phone_number = `${countryCode.replace('+', '')}${telefon}`;
       const payload: OtpAttemptRequest =
         loginType === 'tc'
-          ? { type: 'application', tc_identity_no: tcKimlik, phone_number }
-          : { type: 'application', identity_no: pasaportNo, phone_number };
+          ? { type: 'patient', tc_identity_no: tcKimlik, phone_number }
+          : { type: 'patient', identity_no: pasaportNo, phone_number };
 
       clearOtpContext();
       setCurrentOtp('');
@@ -190,19 +192,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <div className="input-wrapper">
-              <label htmlFor="telefon" className="input-label">Telefon Numarası</label>
-              <input
-                id="telefon"
-                type="tel"
-                maxLength={10}
-                value={telefon}
-                onChange={(e) => setTelefon(e.target.value.replace(/\D/g, ''))}
-                className="custom-input"
-                placeholder="5XX XXX XX XX"
-                inputMode="numeric"
-              />
-            </div>
+            <PhoneInput
+              phoneNumber={telefon}
+              countryCode={countryCode}
+              onPhoneChange={setTelefon}
+              onCountryCodeChange={setCountryCode}
+              placeholder="5XX XXX XX XX"
+              maxLength={10}
+              disabled={isSubmitting}
+            />
 
             <IonButton 
               expand="block" 

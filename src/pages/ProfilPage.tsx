@@ -25,9 +25,11 @@ import { useHistory } from 'react-router-dom';
 import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
 import { logout as performLogout } from '../services/auth';
-import type { UserProfileResponse } from '../types/api';
+import type { PatientShowResponse } from '../types/api';
 import { useEffectOnce } from '../hooks/useEffectOnce';
 import { buildProtectedPayload } from '../services/otpContext';
+import PhoneInput from '../components/PhoneInput';
+import { getCountryCodeByPrefix } from '../utils/countryCodes';
 import './ProfilPage.css';
 
 interface ProfilPageProps {
@@ -45,6 +47,8 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [newPhone, setNewPhone] = useState('');
+  const [phoneCountryCode, setPhoneCountryCode] = useState('+90');
+  const [phoneCountryIso2, setPhoneCountryIso2] = useState('TR');
   const [currentPhone, setCurrentPhone] = useState('');
   const [phoneStep, setPhoneStep] = useState<'phone' | 'otp'>('phone');
   const [otpDigits, setOtpDigits] = useState<string[]>(Array(6).fill(''));
@@ -63,18 +67,53 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
   const [isPhoneVerifying, setIsPhoneVerifying] = useState(false);
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
   const [isEmailVerifying, setIsEmailVerifying] = useState(false);
+  const [patient, setPatient] = useState<PatientShowResponse['patient'] | null>(null);
+  const [summary, setSummary] = useState<PatientShowResponse['summary'] | null>(null);
+
+  function formatPhone(raw?: string | null) {
+    if (!raw) return '';
+    const digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('90') && digits.length === 12) {
+      return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+    }
+    if (digits.length > 4) {
+      return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+    }
+    return digits;
+  }
+
+  function formatCardNumber(raw?: string | null) {
+    if (!raw) return '';
+    return raw.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+  }
+
+  function formatDate(iso?: string | null) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('tr-TR');
+  }
 
   useEffectOnce(() => {
     (async () => {
       try {
-        const profile = await http.post<UserProfileResponse>(EP_MAP.LOGIN, buildProtectedPayload({}), { retryMeta: { retry: 1 } });
-        setCurrentPhone((profile as any)?.telefon || (profile as any)?.phone_number || '');
-        setCurrentEmail((profile as any)?.eposta || (profile as any)?.email || '');
+        const data = await http.post<PatientShowResponse>(EP_MAP.LOGIN, buildProtectedPayload({}), { retryMeta: { retry: 1 } });
+        setPatient(data?.patient || null);
+        setSummary(data?.summary || null);
+        const formattedPhone = formatPhone(data?.patient?.phone_number);
+        setCurrentPhone(formattedPhone);
+        setCurrentEmail(data?.patient?.email || '');
       } catch {
         history.replace('/login');
       }
     })();
   });
+
+  const totalTransactions = summary?.monthly_total_transactions?.reduce((sum, m) => sum + (m?.transaction_count || 0), 0) || 0;
+  const currentMonthTransactions = summary?.monthly_total_transactions?.slice(-1)[0]?.transaction_count || 0;
+  const remainingBalance = summary?.kpis?.remaining_balance?.current ?? summary?.monthly_balance?.slice(-1)[0]?.balance;
+  const activeDiscountCount = summary?.active_discounts_details?.length || 0;
+  const displayPhone = currentPhone || formatPhone(patient?.phone_number);
+  const displayEmail = currentEmail || patient?.email || '';
 
   const handlePasswordChange = async () => {
     if (isPasswordSubmitting) return;
@@ -126,16 +165,18 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
       setShowToast(true);
       return;
     }
-    if (newPhone.replace(/\D/g, '').length !== 10) {
-      setToastMessage('Telefon numarası 10 haneli olmalıdır.');
+    const phoneDigits = newPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 6 || phoneDigits.length > 15) {
+      setToastMessage('Telefon numarası 6-15 haneli olmalıdır.');
       setToastColor('danger');
       setShowToast(true);
       return;
     }
     try {
       setIsPhoneSubmitting(true);
-      const normalizedPhone = newPhone.startsWith('0') ? newPhone : `0${newPhone}`;
-      await http.post(EP_MAP.UPDATE_PROFILE, buildProtectedPayload({ new_phone_number: normalizedPhone }));
+      const normalizedPhone = `${phoneCountryCode.replace('+', '')}${phoneDigits}`;
+      const country_iso2 = getCountryCodeByPrefix(phoneCountryCode)?.iso2 || phoneCountryIso2;
+      await http.post(EP_MAP.UPDATE_PROFILE, buildProtectedPayload({ new_phone_number: normalizedPhone, country_iso2 }));
       setCurrentPhone(normalizedPhone);
       setToastMessage('Telefonunuz güncellendi.');
       setToastColor('success');
@@ -181,6 +222,8 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     setPhoneStep('phone');
     setOtpDigits(Array(6).fill(''));
     setNewPhone('');
+    setPhoneCountryCode('+90');
+    setPhoneCountryIso2('TR');
   };
 
   const handleEmailContinue = async () => {
@@ -200,7 +243,7 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
     }
     try {
       setIsEmailSubmitting(true);
-      await http.post(EP_MAP.UPDATE_PROFILE, buildProtectedPayload({ new_email: newEmail }));
+      await http.post(EP_MAP.UPDATE_PROFILE, buildProtectedPayload({ email : newEmail }));
       setCurrentEmail(newEmail);
       setToastMessage('E-posta adresiniz güncellendi.');
       setToastColor('success');
@@ -263,15 +306,15 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
             <IonCol size="6">
               <IonCard className="stat-card">
                 <IonCardContent>
-                  <div className="stat-value">12</div>
-                  <div className="stat-label">Toplam Tedavi</div>
+                  <div className="stat-value">{totalTransactions.toLocaleString('tr-TR')}</div>
+                  <div className="stat-label">Toplam İşlem</div>
                 </IonCardContent>
               </IonCard>
             </IonCol>
             <IonCol size="6">
               <IonCard className="stat-card">
                 <IonCardContent>
-                  <div className="stat-value">3</div>
+                  <div className="stat-value">{currentMonthTransactions.toLocaleString('tr-TR')}</div>
                   <div className="stat-label">Bu Ay</div>
                 </IonCardContent>
               </IonCard>
@@ -292,31 +335,85 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
                 <IonItem>
                   <IonLabel>
                     <p className="info-label">Ad Soyad</p>
-                    <h3 className="info-value">{/* Ad Soyad sunucudan geliyorsa gösterilir */}</h3>
+                    <h3 className="info-value">{patient ? `${patient.first_name} ${patient.last_name}` : '-'}</h3>
                   </IonLabel>
                 </IonItem>
 
                 <IonItem>
                   <IonLabel>
                     <p className="info-label">T.C. Kimlik No</p>
-                    <h3 className="info-value">{/* T.C. Kimlik sunucudan geliyorsa gösterilir */}</h3>
+                    <h3 className="info-value">{patient?.tc_identity_no || '-'}</h3>
                   </IonLabel>
                 </IonItem>
 
-                {currentPhone && (
+                {patient?.card_number && (
                   <IonItem>
                     <IonLabel>
-                      <p className="info-label">Telefon</p>
-                      <h3 className="info-value">{currentPhone}</h3>
+                      <p className="info-label">Kart Numarası</p>
+                      <h3 className="info-value">{formatCardNumber(patient.card_number)}</h3>
                     </IonLabel>
                   </IonItem>
                 )}
 
-                {currentEmail && (
+                {displayPhone && (
+                  <IonItem>
+                    <IonLabel>
+                      <p className="info-label">Telefon</p>
+                      <h3 className="info-value">{displayPhone}</h3>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {displayEmail && (
                   <IonItem>
                     <IonLabel>
                       <p className="info-label">E-posta</p>
-                      <h3 className="info-value">{currentEmail}</h3>
+                      <h3 className="info-value">{displayEmail}</h3>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {patient?.birth_date && (
+                  <IonItem>
+                    <IonLabel>
+                      <p className="info-label">Doğum Tarihi</p>
+                      <h3 className="info-value">{formatDate(patient.birth_date)}</h3>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {(patient?.city || patient?.district) && (
+                  <IonItem>
+                    <IonLabel>
+                      <p className="info-label">İl / İlçe</p>
+                      <h3 className="info-value">{[patient?.city, patient?.district].filter(Boolean).join(' / ')}</h3>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {patient?.address && (
+                  <IonItem>
+                    <IonLabel>
+                      <p className="info-label">Adres</p>
+                      <h3 className="info-value">{patient.address}</h3>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {typeof remainingBalance === 'number' && (
+                  <IonItem>
+                    <IonLabel>
+                      <p className="info-label">Kalan Bakiye</p>
+                      <h3 className="info-value">{remainingBalance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</h3>
+                    </IonLabel>
+                  </IonItem>
+                )}
+
+                {activeDiscountCount > 0 && (
+                  <IonItem>
+                    <IonLabel>
+                      <p className="info-label">Aktif İndirim</p>
+                      <h3 className="info-value">{activeDiscountCount}</h3>
                     </IonLabel>
                   </IonItem>
                 )}
@@ -374,15 +471,18 @@ const ProfilPage: React.FC<ProfilPageProps> = ({ onLogout }) => {
           <IonContent className="ion-padding phoneModal__content">
             {phoneStep === 'phone' && (
               <div className="phoneModal__step phoneModal__stepPhone">
-                <IonInput
-                  label="Yeni Telefon Numarası"
-                  labelPlacement="stacked"
-                  type="tel"
-                  maxlength={10}
-                  value={newPhone}
-                  onIonInput={(e) => setNewPhone((e.detail.value || '').replace(/\D/g, ''))}
-                  className="custom-input"
-                  placeholder="5XX XXX XX XX"
+                <PhoneInput
+                  phoneNumber={newPhone}
+                  countryCode={phoneCountryCode}
+                  onPhoneChange={setNewPhone}
+                  onCountryCodeChange={(code) => {
+                    setPhoneCountryCode(code);
+                    const found = getCountryCodeByPrefix(code);
+                    if (found?.iso2) setPhoneCountryIso2(found.iso2);
+                  }}
+                  placeholder="Telefon numarası"
+                  maxLength={10}
+                  disabled={isPhoneSubmitting}
                 />
                 <IonButton expand="block" className="primary-button" onClick={handlePhoneContinue}>Devam Et</IonButton>
                 <IonButton
