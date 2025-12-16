@@ -10,6 +10,8 @@ import {
   IonSpinner
 } from '@ionic/react';
 import { downloadOutline } from 'ionicons/icons';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { useHistory, useLocation } from 'react-router-dom';
 import { EP_MAP } from '../services/apiEndpoints';
 import { http } from '../services/api';
@@ -67,7 +69,37 @@ const IslemDetayPage: React.FC = () => {
   if (!aktifIslem) return null;
 
   const handleDownloadReport = async () => {
-    alert('Rapor indirme bu sürümde OTP sözleşmesine göre kapalı.');
+    if (!contentRef.current) return;
+    try {
+      setIsDownloading(true);
+      const el = contentRef.current;
+      // Use a white background for better contrast in PDF
+      const canvas = await html2canvas(el, {
+        scale: window.devicePixelRatio || 2,
+        backgroundColor: '#ffffff',
+        useCORS: true
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgProps = { width: canvas.width, height: canvas.height };
+      const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
+      const imgWidthMm = imgProps.width * ratio;
+      const imgHeightMm = imgProps.height * ratio;
+      const x = (pageWidth - imgWidthMm) / 2;
+      const y = 10; // small top margin
+
+      pdf.addImage(imgData, 'PNG', x, y, imgWidthMm, imgHeightMm);
+      const filename = `islem_${aktifIslem.id}.pdf`;
+      pdf.save(filename);
+    } catch (e) {
+      alert('PDF oluşturma sırasında bir hata oluştu.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const history = useHistory();

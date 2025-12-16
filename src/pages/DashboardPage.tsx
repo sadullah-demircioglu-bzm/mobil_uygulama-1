@@ -69,13 +69,23 @@ const DashboardPage: React.FC = () => {
     let mounted = true;
     (async () => {
       try {
-        const showData = await http.post<PatientShowResponse>(EP_MAP.LOGIN, buildProtectedPayload({}));
+        const [showData, txResp] = await Promise.all([
+          http.post<PatientShowResponse>(EP_MAP.LOGIN, buildProtectedPayload({})),
+          http.post<any>(EP_MAP.TRANSACTIONS_LIST, buildProtectedPayload({ page: 1, limit: 50 }))
+        ]);
         if (!mounted) return;
         setProfile(mapPatientToProfile(showData.patient));
         setBalance(deriveBalance(showData.summary));
         setDiscounts(mapDiscounts(showData.summary));
         setAnnouncements([]);
-        setTransactions(mapTransactions(showData.summary));
+        const items: any[] = Array.isArray(txResp) ? txResp : (txResp?.items ?? []);
+        const mapped = items.map(mapApiItemToIslem);
+        mapped.sort((a, b) => {
+          const ad = new Date(a.tarih || '').getTime();
+          const bd = new Date(b.tarih || '').getTime();
+          return bd - ad;
+        });
+        setTransactions(mapped.slice(0, 3));
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.response?.data?.message || e?.message || 'Veriler yüklenemedi.');
@@ -142,6 +152,38 @@ const DashboardPage: React.FC = () => {
         toplamTutar: balanceForMonth
       };
     });
+  };
+
+  const formatAmount = (value: any) => {
+    const n = Number(String(value).replace(/[^-\d.]/g, ''));
+    if (Number.isNaN(n)) return String(value || '');
+    const formatted = `${Math.abs(n).toLocaleString('tr-TR')} ₺`;
+    return n < 0 ? `- ${formatted}` : formatted;
+  };
+
+  const mapApiItemToIslem = (item: any): TransactionListItem => {
+    const turMap: Record<string, string> = {
+      CREDIT_ADD: 'Bakiye Yükleme',
+      CREDIT_SPEND: 'Harcama',
+      CREDIT_ROLLBACK: 'İade',
+      DISCOUNT_APPLY: 'İndirim Uygulama',
+      DISCOUNT_REBATE: 'İndirim İadesi'
+    };
+    const status: TransactionStatus = item?.status === 'RECEIVED' ? 'tamamlandi' : 'beklemede';
+    const hastane = item?.metadata?.b2b_client_name || item?.client?.name || '';
+    return {
+      id: item?.id,
+      tarih: new Date(item?.created_at || '').toLocaleString('tr-TR'),
+      tur: turMap[item?.type] || item?.type || 'İşlem',
+      hastane,
+      tutar: formatAmount(item?.amount),
+      durum: status,
+      doktor: item?.metadata?.doctor_name || undefined,
+      detay: item?.notes || undefined,
+      indirimOrani: undefined,
+      indirimTutari: item?.discount_amount ? Number(item.discount_amount) : undefined,
+      toplamTutar: item?.original_amount ? Number(item.original_amount) : undefined
+    };
   };
 
   return (
