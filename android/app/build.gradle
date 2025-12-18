@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.example.odemeApp"
+    namespace "com.bezmialem.vakifkart"
     compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.example.odemeApp"
+        applicationId "com.bezmialem.vakifkart"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -18,10 +18,10 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('../../bezmialem-release-key.keystore')
-            storePassword 'bezmialem2024'
+            storeFile file('../bezmialem-upload-key.jks')
+            storePassword 'BezmialemVakifKart2025*'
             keyAlias 'bezmialem'
-            keyPassword 'bezmialem2024'
+            keyPassword 'BezmialemVakifKart2025*'
         }
     }
     buildTypes {

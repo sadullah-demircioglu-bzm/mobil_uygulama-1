@@ -18,31 +18,31 @@ import {
   IonToast
 } from '@ionic/react';
 import './DestekPage.css';
-
+ 
 const DestekPage: React.FC = () => {
   const [konu, setKonu] = useState('');
   const [mesaj, setMesaj] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-
+ 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
     if (!konu || !mesaj) {
       return;
     }
-
+ 
     // Mock submit
     setShowSuccess(true);
     setKonu('');
     setMesaj('');
   };
-
+ 
   return (
     <IonPage>
-
+ 
       <IonContent className="ion-padding destek-page">
         {/* Destek Formu */}
-
+ 
         {/* SSS */}
         <div className="section">
           <IonText>
@@ -52,78 +52,59 @@ const DestekPage: React.FC = () => {
           <IonAccordionGroup>
             <IonAccordion value="1">
               <IonItem slot="header">
+                <IonLabel>Kartı Nasıl Alırım?</IonLabel>
+              </IonItem>
+              <div className="accordion-content" slot="content">
+                  Bezmialem Vakıf Üniversitesi Hasta Kayıt Bankolarından bu karta başvurunuzu sağlayabilirsiniz. Sizlere verilecek websitesi linkine girerek kart başvuru formunu doldurarak talebinizi oluşturabilirsiniz. Hakkınızda yapılacak mali durum araştırmasına göre süreç onaylanacak ve kart temini tarafınıza sağlanacaktır.              </div>
+            </IonAccordion>
+ 
+            <IonAccordion value="2">
+              <IonItem slot="header">
                 <IonLabel>Kartımı nasıl kullanabilirim?</IonLabel>
               </IonItem>
               <div className="accordion-content" slot="content">
-                Bezmialem Vakıf Kart ile tüm poliklinik hizmetlerinde %40 indirimden yararlanabilirsiniz.
+                Bezmiâlem Vakıf Üniversitesi Hastanesi Hasta Kayıt Bankolarında bu kartı göstererek sistemden yapılacak kontroller sonrası üzerinizde tanımlı bakiye ve indirim hakkınızı kullanabilirsiniz. Adınıza tanımlı hesabınızdaki miktara göre alacağınız sağlık hizmeti faturalanacaktır. Bu kart için verilen süre içerisinde aktif olarak kullanabileceksiniz.
               </div>
             </IonAccordion>
-
-            <IonAccordion value="2">
-              <IonItem slot="header">
-                <IonLabel>İndirim oranı nedir?</IonLabel>
-              </IonItem>
-              <div className="accordion-content" slot="content">
-                Kart sahipleri tüm sağlık hizmetlerinde %40 indirim elde eder.
-              </div>
-            </IonAccordion>
-
+ 
             <IonAccordion value="4">
               <IonItem slot="header">
-                <IonLabel>Randevu nasıl alabilirim?</IonLabel>
+                <IonLabel>Bakiye Nedir?</IonLabel>
               </IonItem>
               <div className="accordion-content" slot="content">
-                Telefon (0212 453 17 00) veya online sistemimizden randevu alabilirsiniz.
+                Bezmialem Vakıf Kart sisteminde tanımlı olan, sağlık hizmeti aldığınızda fatura edilecek meblağ üzerinden düşülecek nakit miktardır. Bu bakiyeyi size verilecek süre içerisinde istediğiniz miktarda kullanabilirsiniz.
               </div>
             </IonAccordion>
-
+ 
             <IonAccordion value="5">
               <IonItem slot="header">
-                <IonLabel>Kartı nasıl alırım?</IonLabel>
+                <IonLabel>İndirim Oranı Nedir?</IonLabel>
               </IonItem>
               <div className="accordion-content" slot="content">
-                Başvurunuzu uygulama üzerinden tamamlayıp onaylandığında kartınız dijital olarak tanımlanır; fiziksel kart gerekmez.
+                Bezmialem Vakıf Kart sisteminde tanımlı olan, sağlık hizmeti aldığınızda fatura edilecek meblağ üzerinden düşülecek yüzdelik orandır. Bu oranı size verilecek süre içerisinde kullanabilirsiniz.
               </div>
             </IonAccordion>
-
+ 
             <IonAccordion value="6">
               <IonItem slot="header">
-                <IonLabel>Bakiye nasıl yüklenir?</IonLabel>
+                <IonLabel>Bakiye ve İndirim Oranı Nasıl Yüklenir?</IonLabel>
               </IonItem>
               <div className="accordion-content" slot="content">
-                Hesabınıza aktarılan tutarlar uygulamada otomatik görünür; harcamalarınızı ve kalan bakiyeyi "İşlemler" ve "Profil" sayfalarından takip edebilirsiniz.
+                Bezmialem Vakıf Kart verilen kişilere belirlenen bakiye ve indirim oranı belirlenen periyotlarda otomatik olarak yüklenecektir.
               </div>
             </IonAccordion>
-
+ 
             <IonAccordion value="7">
               <IonItem slot="header">
-                <IonLabel>İndirim kodlarım nerede?</IonLabel>
+                <IonLabel>Kayıp/ Çalıntı durumunda ne yapmalıyım?</IonLabel>
               </IonItem>
               <div className="accordion-content" slot="content">
-                Aktif indirimleriniz "Profil" ve "Dashboard" sayfalarında listelenir; ilgili poliklinik işlemlerinde otomatik uygulanır.
-              </div>
-            </IonAccordion>
-
-            <IonAccordion value="8">
-              <IonItem slot="header">
-                <IonLabel>Başvurum ne kadar sürer?</IonLabel>
-              </IonItem>
-              <div className="accordion-content" slot="content">
-                Başvurular genellikle 1-2 iş günü içinde değerlendirilir; durumunuzu "Başvuru Kontrolü" ekranından görebilirsiniz.
-              </div>
-            </IonAccordion>
-
-            <IonAccordion value="9">
-              <IonItem slot="header">
-                <IonLabel>Kayıp/çalıntı durumda ne yapmalıyım?</IonLabel>
-              </IonItem>
-              <div className="accordion-content" slot="content">
-                Destek üzerinden bize bildirirseniz kartınız anında güvenli moda alınır ve yenisi dijital olarak tanımlanır.
+                Bezmialem Vakıf Kart üzerinde belirtilen iletişim bilgileriyle kurum ile temasa geçebilirsiniz.
               </div>
             </IonAccordion>
           </IonAccordionGroup>
         </div>
-
+ 
         <IonToast
           isOpen={showSuccess}
           onDidDismiss={() => setShowSuccess(false)}
@@ -136,5 +117,7 @@ const DestekPage: React.FC = () => {
     </IonPage>
   );
 };
-
+ 
 export default DestekPage;
+ 
+ 

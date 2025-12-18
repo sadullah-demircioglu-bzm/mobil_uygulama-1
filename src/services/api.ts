@@ -14,8 +14,21 @@ declare module 'axios' {
 }
 
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: 'https://vakifkart.bezmialem.com.tr',
   timeout: 15000
+});
+
+
+api.interceptors.request.use((config) => {
+  // Tam URL'yi birleştir
+  const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+
+  console.log('🚀 [REQUEST] Gidilen Adres:', fullUrl);
+  console.log('📦 [REQUEST] Gönderilen Veri (Body):', config.data);
+
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 // Centralized error handling + retry
 api.interceptors.response.use(

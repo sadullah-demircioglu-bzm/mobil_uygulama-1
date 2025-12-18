@@ -1,4 +1,4 @@
-package com.example.odemeApp;
+package com.bezmialem.vakifkart;
 
 import com.getcapacitor.BridgeActivity;
 
